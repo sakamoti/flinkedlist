@@ -68,10 +68,9 @@ module flinkedlist
   !>モジュール内で使用されるリスト要素
   !>@note オブジェクト指向なのでfortran2003,2008の機能必須。
   type,private :: node
-    class(*)   ,pointer,private :: obj=>null() !<リスト要素の実体へのポインタ
-    type(node)  ,pointer,private :: nxt=>null() !<次要素へのリンク
-    type(node)  ,pointer,private :: bef=>null() !<前要素へのリンク
-    class(list_type),pointer,private :: parent=>null() !<リストを保持する親オブジェクトへのポインタ
+    class(*)  ,pointer,private :: obj=>null() !<リスト要素の実体へのポインタ
+    type(node),pointer,private :: nxt=>null() !<次要素へのリンク
+    type(node),pointer,private :: bef=>null() !<前要素へのリンク
     contains
       final :: node_final
       procedure,private :: node_equal !< user defined assignment procedure
@@ -87,11 +86,13 @@ module flinkedlist
     class(list_type),pointer,private :: parent=>null() !<親オブジェクトへのポインタ
     contains
       final :: node_operator_type_final !<node_operator_type型のデストラクタ
-      procedure,non_overridable,public :: init    => node_operator_type_head !<指示先をリスト先頭に戻す
+      procedure,non_overridable,public :: init    => node_operator_type_init !<指示先をリスト先頭に戻す
+      procedure,non_overridable,public :: head    => node_operator_type_head !<指示先をリスト先頭に戻す
       procedure,non_overridable,public :: tail    => node_operator_type_tail !<指示先をリスト最後尾に
       procedure,non_overridable,public :: next    => node_operator_type_next !<指示先を一つ次に移す
       procedure,non_overridable,public :: prev    => node_operator_type_previous !<指示先を一つ前に移す
       procedure,non_overridable,public :: getobj  => node_operator_type_getobj   !<指示先の要素へのポインタを得る
+      procedure,non_overridable,public :: show => node_show !<
   end type
   !---------
   !>@brief リンクリストを保持するオブジェクト。
@@ -154,21 +155,32 @@ module flinkedlist
     end subroutine
   end interface
   contains
+    impure elemental subroutine node_operator_type_init(self,list)
+      class(node_operator_type),intent(inout) :: self
+      class(list_type),intent(in),target :: list
+      self%parent=>list
+      call self%head()
+      if(associated(list%head))then
+        self%pos%nxt=>list%head%nxt
+        self%pos%bef=>list%head%bef
+      else
+        self%pos%nxt=>null()
+        self%pos%bef=>null()
+        !write(error_unit,*) "wornning!! This list doesn't have the head element."
+      endif
+    end subroutine
     !--------------------------------
     !>@brief node_operator_typeが指し示すリスト要素を初期化する
     !>
     !>@param[inout] self node_operator_type型
     !>@param[in] list 親となるlist_type型
-    impure elemental subroutine node_operator_type_head(self,list)
+    impure elemental subroutine node_operator_type_head(self)
       class(node_operator_type),intent(inout) :: self
-      class(list_type),intent(in),target :: list
-      self%parent=>list
-      if(associated(list%head))then
-        self%pos=>list%head
+      if(associated(self%parent))then
+        self%pos=>self%parent%head
       else
-        self%pos=>null()
-        !write(error_unit,*) "wornning!! This list doesn't have the head element."
-      endif
+        self%pos=>self%parent%head
+      end if
     end subroutine
     !--------------------------------
     !>@brief node_operator_typeが指し示すリスト要素を最後尾にする
@@ -176,11 +188,8 @@ module flinkedlist
     !>@param[inout] self node_operator_type型
     impure elemental subroutine node_operator_type_tail(self)
       class(node_operator_type),intent(inout) :: self
-      !integer :: i,n
       call node_operator_type_check_parent(self)
       if(.not.associated(self%pos)) return
-      !n=self%parent%count()
-      !do i=1,n
       do while(associated(self%pos%nxt))
         call self%next()
       enddo
@@ -195,8 +204,6 @@ module flinkedlist
       if(.not.associated(self%pos)) return
       if(associated(self%pos%nxt))then
         self%pos=>self%pos%nxt
-      else
-        !self%ipos_ptr=>self%head
       endif
     end subroutine
     !--------------------------------
@@ -209,8 +216,6 @@ module flinkedlist
       if(.not.associated(self%pos)) return
       if(associated(self%pos%bef))then
         self%pos=>self%pos%bef
-      else
-        !self%ipos_ptr=>self%head
       endif
     end subroutine
     !--------------------------------
@@ -270,7 +275,6 @@ module flinkedlist
       if(associated(right%obj))allocate(left%obj,source=right%obj)
       left%nxt=>right%nxt
       left%bef=>right%bef
-      left%parent=>right%parent !要素のコピーだけ発生する場合,親は変えない
     end subroutine
     !--------------------------------
     !>@brief node型のデストラクタ
@@ -282,7 +286,7 @@ module flinkedlist
       if(associated(self%obj))deallocate(self%obj)
       self%nxt=>null()
       self%bef=>null()
-      self%parent=>null()
+      !self%parent=>null()
     end subroutine
     !--------------------------------
     !>@brief nodeptr型が示すオブジェクトを表示
@@ -340,38 +344,35 @@ module flinkedlist
      !endif
     end subroutine
     !--------------------------------
-    !>@brief list_type型への要素追加関数
-    !>
-    !>@param[inout] self list_type型
-    !>@param[in] obj リスト先頭に要素(何でも良い)を追加する
-    !>@param[inout] addloc (optinal)node_operator_typeの指示先の次に要素objを追加する
     subroutine list_append(self,obj,addloc)
-      class(list_type),intent(inout),target :: self
-      class(*),intent(in) :: obj
-      type(node_operator_type),intent(inout),optional :: addloc
+      !<@brief append data to the list
+      !<
+      !< data is newly allocated and insert into the list. (default is head position)
+      class(list_type),intent(inout),target :: self  !! list
+      class(*),intent(in) :: obj  !! unlimited polimorphic type to append the list
+      type(node_operator_type),intent(inout),optional :: addloc !! obj is added next to this pointer
       type(node),pointer :: add,tmp
       allocate(node::add)
       allocate(add%obj,source=obj)
-      add%parent=>self !要素の親リストを示す
       if(present(addloc))then
-        !list中のaddlocの次の位置にnodeを挿入
+        ! insert data next to the position `addloc`
         if(.not.associated(addloc%parent))then
-          write(error_unit,*)"要素を追加するリストが指定されていません"
-          write(error_unit,*)"データはリストに追加されませんでした。"
+          write(error_unit,*)"ERROR: Though addloc optional parameter is added, not associated to `list_type`"
+          write(error_unit,*)"ERROR: Fail to append the data to the list"
           return
         endif
         if(.not.associated(addloc%pos))then
-          write(error_unit,*)"追加する場所のポインタが空です"
-          write(error_unit,*)"データはリストに追加されませんでした。"
+          write(error_unit,*)"ERROR: NULL POINTER (addloc%pos)"
+          write(error_unit,*)"ERROR: Fail to append the data to the list"
           return
         else
-          !追加
+          !append
           add%nxt=>addloc%pos%nxt
-          addloc%pos%nxt=>add      !ここでaddlocのポインタ指示先が書き換えられる
+          addloc%pos%nxt=>add      !addloc pointer is changed
           add%bef=>addloc%pos
         endif
       else
-        !headに挿入
+        !add data to the head position
         if(.not.associated(self%head))then
           self%head=>add
         else
@@ -407,22 +408,21 @@ module flinkedlist
       endif
 
       if(do_para)then
-        !並列実行(OpenMP)
-          temp=self%listarray()
-          !$omp parallel
-          !$omp do
-          do i=1,size(temp)
-            !関数をリスト要素に適用
-            call applyproc(temp(i)%pos%obj,passdata=passdata)
-          enddo
-          !$omp end do
-          !print *, "Hello! N =", omp_get_num_threads(), " and I am ", omp_get_thread_num()
-          !$omp end parallel
+        !with OpenMP
+        temp=self%listarray()
+        !$omp parallel
+        !$omp do
+        do i=1,size(temp)
+          !apply function to list elements
+          call applyproc(temp(i)%pos%obj,passdata=passdata)
+        enddo
+        !$omp end do
+        !print *, "Hello! N =", omp_get_num_threads(), " and I am ", omp_get_thread_num()
+        !$omp end parallel
       else
-        !逐次実行
+        !sequential
         call ipt%init(self)
         do i=1,self%num
-          !関数をリスト要素に適用
           call applyproc(ipt%pos%obj,passdata=passdata)
           call ipt%next()
         enddo
@@ -450,7 +450,7 @@ module flinkedlist
       call ipt%init(self)
       do i=1,self%num
         write(fileid,'(1X,"Item ",I0,"/",I0,";",2X)',advance="no") &
-          i,self%num
+          self%num-i+1,self%num
         call self%show(ipt,showproc=showproc,passdata=passdata,fid=fileid)
         call ipt%next()
       enddo
@@ -462,18 +462,18 @@ module flinkedlist
     !>@param[in] self list_type型
     !>@param[inout] delnode リスト要素のポインタ
     subroutine node_delete(self,delnode)
-      class(list_type),intent(in),target :: self
+      class(list_type),intent(inout),target :: self
       class(node_operator_type),intent(inout) :: delnode
       type(node),pointer :: bef,nxt
       class(list_type),pointer :: plist
       !ポインタ指示先の確認
       if(.not.associated(delnode%pos))return
       if(.not.associated(delnode%parent,target=self))then
-        !print*,"追加する場所はリストの要素ではありません"
-        print*,"削除できませんでした。"
+        write(error_unit,'("ERROR: delnode is not point own elements")')
+        write(error_unit,'("ERROR: fail to delete@node_delete")')
         return
       else
-        !削除
+        !delete
         plist=>delnode%parent
         plist%num=plist%num-1
         bef=>delnode%pos%bef
@@ -481,11 +481,14 @@ module flinkedlist
         if(associated(bef))then
           bef%nxt=>nxt
         else
-          !リスト先頭を削除するのでheadの支持先を修正
+          nxt%bef => null()
+          ! head pointer needs to be fix
           plist%head=>nxt
         endif
         if(associated(nxt))then
           nxt%bef=>bef
+        else
+          bef%nxt => null()
         endif
         deallocate(delnode%pos)
         delnode%pos=>nxt

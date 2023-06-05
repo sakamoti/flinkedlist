@@ -58,13 +58,16 @@ program check
 
   !=== get value from list
   call node%init(list)
-  ! node pointer point 4th element from header
-  do i=1,3
+  call node%head()
+  ! node pointer point 5th element from header
+  do i=1,4
     call node%next()
   end do
   write(*,'("4th element=")',advance='no') 
   call list%show(node)
   !value = list%getobj(node)
+  !---
+  call transform_list2array(list)
   contains
     subroutine user_show_proc(obj,passdata,fid)
       class(*),intent(in) :: obj
@@ -74,5 +77,16 @@ program check
       type is(user_type)
         print *,"user_type:", obj
       end select
+    end subroutine
+
+    subroutine transform_list2array(list)
+      class(list_type) :: list
+      type(node_operator_type),allocatable :: nodearray(:)
+      print*,"!===   list to node_operator_array (Head:1 ~ tail:10)"
+      nodearray = list%listarray()
+      do i=1,size(nodearray)
+        write(output_unit,'(3x,i3)',advance='no') i
+        call nodearray(i)%show(showproc=user_show_proc)
+      end do
     end subroutine
 end program check

@@ -86,13 +86,14 @@ module flinkedlist
     class(list_type),pointer,private :: parent=>null() !<親オブジェクトへのポインタ
     contains
       final :: node_operator_type_final !<node_operator_type型のデストラクタ
-      procedure,non_overridable,public :: init    => node_operator_type_init !<指示先をリスト先頭に戻す
+      procedure,non_overridable,public :: init    => node_operator_type_init !<初期化
       procedure,non_overridable,public :: head    => node_operator_type_head !<指示先をリスト先頭に戻す
       procedure,non_overridable,public :: tail    => node_operator_type_tail !<指示先をリスト最後尾に
       procedure,non_overridable,public :: next    => node_operator_type_next !<指示先を一つ次に移す
       procedure,non_overridable,public :: prev    => node_operator_type_previous !<指示先を一つ前に移す
-      procedure,non_overridable,public :: getobj  => node_operator_type_getobj   !<指示先の要素へのポインタを得る
       procedure,non_overridable,public :: show => node_show !<
+      procedure,non_overridable,public :: get_ptr  => node_operator_type_getobj_ptr   !<指示先の要素へのポインタを得る
+      procedure,non_overridable,public :: get_alloc  => node_operator_type_getobj_alloc   !<指示先の要素へのポインタを得る
   end type
   !---------
   !>@brief リンクリストを保持するオブジェクト。
@@ -223,7 +224,7 @@ module flinkedlist
     !>
     !>@param[in] self 操作対象のnode_operator_type型
     !>@retval res 無限多相性のオブジェクトを示すポインタ
-    function node_operator_type_getobj(self)result(res)
+    function node_operator_type_getobj_ptr(self)result(res)
       class(node_operator_type),intent(in) :: self
       class(*),pointer :: res
       res=>null()
@@ -231,6 +232,14 @@ module flinkedlist
       if(.not.associated(self%pos%obj))return
       !allocate(res,source=self%pos%obj)
       res=>self%pos%obj
+    end function
+
+    function node_operator_type_getobj_alloc(self)result(res)
+      class(node_operator_type),intent(in) :: self
+      class(*),allocatable :: res
+      if(.not.associated(self%pos))return
+      if(.not.associated(self%pos%obj))return
+      allocate(res,source=self%pos%obj)
     end function
     !--------------------------------
     !>@brief node_operator_typeが親リストを持つかどうかチェックする
@@ -267,14 +276,15 @@ module flinkedlist
     !--------------------------------
     !>@brief イコールの演算子でリストの要素をコピーする
     !>
+    !> ただし、コピー元リストの前後ポインタは関連付けない
     !>@param[out] left イコールの左側
     !>@param[in]  right イコールの右側
     impure elemental subroutine node_equal(left,right)
       class(node),intent(out) :: left
       class(node),intent(in)  :: right
       if(associated(right%obj))allocate(left%obj,source=right%obj)
-      left%nxt=>right%nxt
-      left%bef=>right%bef
+      left%nxt=> null()
+      left%bef=> null()
     end subroutine
     !--------------------------------
     !>@brief node型のデストラクタ

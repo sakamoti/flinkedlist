@@ -82,11 +82,13 @@ program check
     subroutine transform_list2array(list)
       class(list_type) :: list
       type(node_operator_type),allocatable :: nodearray(:)
+      class(*),allocatable :: val
       print*,"!===   list to node_operator_array (Head:1 ~ tail:10)"
       nodearray = list%listarray()
       do i=1,size(nodearray)
         write(output_unit,'(3x,i3)',advance='no') i
         call nodearray(i)%show(showproc=user_show_proc)
+        val = nodearray(i)%get_alloc()
       end do
     end subroutine
 end program check

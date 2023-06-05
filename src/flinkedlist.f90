@@ -54,52 +54,52 @@ module flinkedlist
   implicit none
   private
   !public list_type
-  !public node_operator_type      !$B%j%9%HMWAG$r;X$9%]%$%s%?$r4^$`%*%V%8%'%/%H(B
+  !public node_operator_type      !リスト要素を指すポインタを含むオブジェクト
   !--subroutinies
-  public obj_show        !$BAH$_9~$_7?$NI=<((B+$B%*%W%7%g%s$GL58BB?Aj7?$NI=<((B
+  public obj_show        !組み込み型の表示+オプションで無限多相型の表示
   !-- function interfaces
-  public list_sort_func  !$B%=!<%H4X?t$N%$%s%?!<%U%'!<%9(B
-  public list_apply_proc !apply $B4X?t$N%$%s%?!<%U%'!<%9(B
-  public obj_show_proc   !$BL58BB?Aj@-%*%V%8%'%/%HI=<($N%$%s%?!<%U%'!<%9(B
+  public list_sort_func  !ソート関数のインターフェース
+  public list_apply_proc !apply 関数のインターフェース
+  public obj_show_proc   !無限多相性オブジェクト表示のインターフェース
 
   !---------
   !>@brief Objects of list elements
   !>
-  !>$B%b%8%e!<%kFb$G;HMQ$5$l$k%j%9%HMWAG(B
-  !>@note $B%*%V%8%'%/%H;X8~$J$N$G(Bfortran2003,2008$B$N5!G=I,?\!#(B
+  !>モジュール内で使用されるリスト要素
+  !>@note オブジェクト指向なのでfortran2003,2008の機能必須。
   type,private :: node
-    class(*)   ,pointer,private :: obj=>null() !<$B%j%9%HMWAG$N<BBN$X$N%]%$%s%?(B
-    type(node)  ,pointer,private :: nxt=>null() !<$B<!MWAG$X$N%j%s%/(B
-    type(node)  ,pointer,private :: bef=>null() !<$BA0MWAG$X$N%j%s%/(B
-    class(list_type),pointer,private :: parent=>null() !<$B%j%9%H$rJ];}$9$k?F%*%V%8%'%/%H$X$N%]%$%s%?(B
+    class(*)   ,pointer,private :: obj=>null() !<リスト要素の実体へのポインタ
+    type(node)  ,pointer,private :: nxt=>null() !<次要素へのリンク
+    type(node)  ,pointer,private :: bef=>null() !<前要素へのリンク
+    class(list_type),pointer,private :: parent=>null() !<リストを保持する親オブジェクトへのポインタ
     contains
       final :: node_final
       procedure,private :: node_equal !< user defined assignment procedure
-      generic :: assignment(=) => node_equal !<$B%f!<%6!<Dj5ABeF~A`:n(B(generic,assignment)
+      generic :: assignment(=) => node_equal !<ユーザー定義代入操作(generic,assignment)
   end type
   !---------
-  !>@brief $B%j%9%HMWAG%*%V%8%'%/%H(B($B30It$+$i$NA`:n5!G=IU$-(B)
+  !>@brief リスト要素オブジェクト(外部からの操作機能付き)
   !>
-  !>$B$3$N7?$rMxMQ$9$kA0$K%j%9%HMWAG$r<($9$h$&$K=i4|2=$5$l$F$$$kI,MW$,$"$k!#(B
-  !>init$B%a%=%C%I$G=i4|2=2DG=!#(B
+  !>この型を利用する前にリスト要素を示すように初期化されている必要がある。
+  !>initメソッドで初期化可能。
   type,public :: node_operator_type
-    type(node)  ,pointer,private :: pos => null()  !<$B%j%9%HMWAG$X$N%]%$%s%?(B
-    class(list_type),pointer,private :: parent=>null() !<$B?F%*%V%8%'%/%H$X$N%]%$%s%?(B
+    type(node)  ,pointer,private :: pos => null()  !<リスト要素へのポインタ
+    class(list_type),pointer,private :: parent=>null() !<親オブジェクトへのポインタ
     contains
-      final :: node_operator_type_final !<node_operator_type$B7?$N%G%9%H%i%/%?(B
-      procedure,non_overridable,public :: init    => node_operator_type_head !<$B;X<(@h$r%j%9%H@hF,$KLa$9(B
-      procedure,non_overridable,public :: tail    => node_operator_type_tail !<$B;X<(@h$r%j%9%H:G8eHx$K(B
-      procedure,non_overridable,public :: next    => node_operator_type_next !<$B;X<(@h$r0l$D<!$K0\$9(B
-      procedure,non_overridable,public :: prev    => node_operator_type_previous !<$B;X<(@h$r0l$DA0$K0\$9(B
-      procedure,non_overridable,public :: getobj  => node_operator_type_getobj   !<$B;X<(@h$NMWAG$X$N%]%$%s%?$rF@$k(B
+      final :: node_operator_type_final !<node_operator_type型のデストラクタ
+      procedure,non_overridable,public :: init    => node_operator_type_head !<指示先をリスト先頭に戻す
+      procedure,non_overridable,public :: tail    => node_operator_type_tail !<指示先をリスト最後尾に
+      procedure,non_overridable,public :: next    => node_operator_type_next !<指示先を一つ次に移す
+      procedure,non_overridable,public :: prev    => node_operator_type_previous !<指示先を一つ前に移す
+      procedure,non_overridable,public :: getobj  => node_operator_type_getobj   !<指示先の要素へのポインタを得る
   end type
   !---------
-  !>@brief $B%j%s%/%j%9%H$rJ];}$9$k%*%V%8%'%/%H!#(B
+  !>@brief リンクリストを保持するオブジェクト。
   type,public :: list_type
-    type(node),pointer,private :: head=>null() !<$B%j%9%H@hF,$X$N%]%$%s%?(B
-    integer,private :: num=0         !<$B%j%9%HMWAG?t(B
+    type(node),pointer,private :: head=>null() !<リスト先頭へのポインタ
+    integer,private :: num=0         !<リスト要素数
     contains
-      final :: list_final !<list_type$B7?$N%G%9%H%i%/%?(B
+      final :: list_final !<list_type型のデストラクタ
       procedure,non_overridable,public :: append    => list_append  !<
         !<append a element (subroutine,impure elemental)
       procedure,non_overridable,public :: delete    => node_delete !<
@@ -115,38 +115,38 @@ module flinkedlist
       procedure,non_overridable,public :: sort      => list_sort !<
         !<sort elements by using user defined routine (subroutine)
       procedure,non_overridable,public :: listarray => list_elem_pointer_array !<
-        !<$B%j%9%HMWAG$r;X$9G[Ns$r:n$k(B(function)
+        !<リスト要素を指す配列を作る(function)
       procedure,non_overridable,nopass,public :: show => node_show !<
-        !<$B;XDj$5$l$?MWAG(B1$B$D$rI=<((B(subroutine)
+        !<指定された要素1つを表示(subroutine)
       procedure,non_overridable,private :: copy      => list_copy !<
-        !<$B%f!<%6!<Dj5ABeF~A`:n$N<BBN(B
+        !<ユーザー定義代入操作の実体
       generic :: assignment(=) => copy !<
-        !<$B%f!<%6!<Dj5ABeF~A`:n(B($B%j%9%H$N%3%T!<(B)
+        !<ユーザー定義代入操作(リストのコピー)
   end type
 
   !----
   interface
-    !>@brief $B%j%9%H$r%=!<%H$9$k$?$a$N4X?t(B
-    !>@param[in] one $B%=!<%H$GHf3S$9$kMWAG(B1
-    !>@param[in] two $B%=!<%H$GHf3S$9$kMWAG(B2
-    !>@param[in] passdata (optional)$BHf3S$N0Y$K;H$&DI2C%G!<%?(B
-    !>@retval is_swap one$B$H(Btwo$B$rF~$lBX$($k$H$-(BTRUE
+    !>@brief リストをソートするための関数
+    !>@param[in] one ソートで比較する要素1
+    !>@param[in] two ソートで比較する要素2
+    !>@param[in] passdata (optional)比較の為に使う追加データ
+    !>@retval is_swap oneとtwoを入れ替えるときTRUE
     function list_sort_func(one,two,passdata)result(is_swap)
       class(*),intent(in) :: one,two
       class(*),intent(in),optional :: passdata
       logical :: is_swap
     end function
-    !>@brief apply$B4X?t$GM?$($k4X?t$N7?(B
-    !>@param[inout] obj $BA`:nBP>]$N%*%V%8%'%/%H(B($B%j%9%HMWAG(B)
-    !>@param[in] passdata (optional)$BDI2C%G!<%?$,I,MW$J;~$K;H$&(B
+    !>@brief apply関数で与える関数の型
+    !>@param[inout] obj 操作対象のオブジェクト(リスト要素)
+    !>@param[in] passdata (optional)追加データが必要な時に使う
     subroutine list_apply_proc(obj,passdata)
       class(*),intent(inout) :: obj
       class(*),intent(in),optional :: passdata
     end subroutine
-    !>@brief obj_show$B%k!<%A%s$G%f!<%6!<Dj5A7?$rI=<($9$k4X?t(B
-    !>@param[in] obj $BA`:nBP>]$N%*%V%8%'%/%H(B($B%j%9%HMWAG(B)
-    !>@param[in] passdata (optional)$BDI2C%G!<%?$,I,MW$J;~$K;H$&(B
-    !>@param[in] fid $B%U%!%$%k(Bid
+    !>@brief obj_showルーチンでユーザー定義型を表示する関数
+    !>@param[in] obj 操作対象のオブジェクト(リスト要素)
+    !>@param[in] passdata (optional)追加データが必要な時に使う
+    !>@param[in] fid ファイルid
     subroutine obj_show_proc(obj,passdata,fid)
       class(*),intent(in) :: obj
       class(*),intent(in),optional :: passdata
@@ -155,10 +155,10 @@ module flinkedlist
   end interface
   contains
     !--------------------------------
-    !>@brief node_operator_type$B$,;X$7<($9%j%9%HMWAG$r=i4|2=$9$k(B
+    !>@brief node_operator_typeが指し示すリスト要素を初期化する
     !>
-    !>@param[inout] self node_operator_type$B7?(B
-    !>@param[in] list $B?F$H$J$k(Blist_type$B7?(B
+    !>@param[inout] self node_operator_type型
+    !>@param[in] list 親となるlist_type型
     impure elemental subroutine node_operator_type_head(self,list)
       class(node_operator_type),intent(inout) :: self
       class(list_type),intent(in),target :: list
@@ -171,9 +171,9 @@ module flinkedlist
       endif
     end subroutine
     !--------------------------------
-    !>@brief node_operator_type$B$,;X$7<($9%j%9%HMWAG$r:G8eHx$K$9$k(B
+    !>@brief node_operator_typeが指し示すリスト要素を最後尾にする
     !>
-    !>@param[inout] self node_operator_type$B7?(B
+    !>@param[inout] self node_operator_type型
     impure elemental subroutine node_operator_type_tail(self)
       class(node_operator_type),intent(inout) :: self
       !integer :: i,n
@@ -186,9 +186,9 @@ module flinkedlist
       enddo
     end subroutine
     !--------------------------------
-    !>@brief node_operator_type$B$,;X$7<($9MWAG$r0l$D<!$K?J$a$k(B
+    !>@brief node_operator_typeが指し示す要素を一つ次に進める
     !>
-    !>@param[inout] self $BA`:nBP>]$N(Bnode_operator_type$B7?(B
+    !>@param[inout] self 操作対象のnode_operator_type型
     impure elemental subroutine node_operator_type_next(self)
       class(node_operator_type),intent(inout),target :: self
       call node_operator_type_check_parent(self)
@@ -200,9 +200,9 @@ module flinkedlist
       endif
     end subroutine
     !--------------------------------
-    !>@brief node_operator_type$B$,;X$7<($9MWAG$r0l$DA0$K?J$a$k(B
+    !>@brief node_operator_typeが指し示す要素を一つ前に進める
     !>
-    !>@param[inout] self $BA`:nBP>]$N(Bnode_operator_type$B7?(B
+    !>@param[inout] self 操作対象のnode_operator_type型
     impure elemental subroutine node_operator_type_previous(self)
       class(node_operator_type),intent(inout),target :: self
       call node_operator_type_check_parent(self)
@@ -214,10 +214,10 @@ module flinkedlist
       endif
     end subroutine
     !--------------------------------
-    !>@brief node_operator_type$B$,;X$7<($9MWAG$rD>$K;X$9%]%$%s%?$rJV$9(B
+    !>@brief node_operator_typeが指し示す要素を直に指すポインタを返す
     !>
-    !>@param[in] self $BA`:nBP>]$N(Bnode_operator_type$B7?(B
-    !>@retval res $BL58BB?Aj@-$N%*%V%8%'%/%H$r<($9%]%$%s%?(B
+    !>@param[in] self 操作対象のnode_operator_type型
+    !>@retval res 無限多相性のオブジェクトを示すポインタ
     function node_operator_type_getobj(self)result(res)
       class(node_operator_type),intent(in) :: self
       class(*),pointer :: res
@@ -228,13 +228,13 @@ module flinkedlist
       res=>self%pos%obj
     end function
     !--------------------------------
-    !>@brief node_operator_type$B$,?F%j%9%H$r;}$D$+$I$&$+%A%'%C%/$9$k(B
+    !>@brief node_operator_typeが親リストを持つかどうかチェックする
     !>
-    !> - $BMWAG$N4XO"IU$1$J$7!#?F%j%9%H$N4XO"IU$1$J$7!#(B:$B=hM}$rCfCG!#(B
-    !> - $BMWAG$N4XO"IU$1$J$7!#?F%j%9%H$N4XO"IU$1$"$j!#(B:$BMWAG$r%j%9%H@hF,$K4XO"IU$1!#(B
-    !> - $BMWAG$N4XO"IU$1$"$j!#?F%j%9%H$N4XO"IU$1$J$7!#(B:$B7Y9p$rI=<($7$FB39T!#(B
+    !> - 要素の関連付けなし。親リストの関連付けなし。:処理を中断。
+    !> - 要素の関連付けなし。親リストの関連付けあり。:要素をリスト先頭に関連付け。
+    !> - 要素の関連付けあり。親リストの関連付けなし。:警告を表示して続行。
     !> .
-    !>@param[in] elpt $BA`:nBP>]$N(Bnode_operator_type$B7?(B
+    !>@param[in] elpt 操作対象のnode_operator_type型
     impure elemental subroutine node_operator_type_check_parent(elpt)
       class(node_operator_type),intent(inout) :: elpt
       if(.not.associated(elpt%pos))then
@@ -251,31 +251,31 @@ module flinkedlist
       endif
     end subroutine
     !--------------------------------
-    !>@brief node_operator_type$B7?$N%G%9%H%i%/%?(B
+    !>@brief node_operator_type型のデストラクタ
     !>
-    !>@param[in] self node_operator_type$B7?(B
+    !>@param[in] self node_operator_type型
     pure elemental subroutine node_operator_type_final(self)
       type(node_operator_type),intent(inout) :: self
       self%pos=>null()
       self%parent=>null()
     end subroutine
     !--------------------------------
-    !>@brief $B%$%3!<%k$N1i;;;R$G%j%9%H$NMWAG$r%3%T!<$9$k(B
+    !>@brief イコールの演算子でリストの要素をコピーする
     !>
-    !>@param[out] left $B%$%3!<%k$N:8B&(B
-    !>@param[in]  right $B%$%3!<%k$N1&B&(B
+    !>@param[out] left イコールの左側
+    !>@param[in]  right イコールの右側
     impure elemental subroutine node_equal(left,right)
       class(node),intent(out) :: left
       class(node),intent(in)  :: right
       if(associated(right%obj))allocate(left%obj,source=right%obj)
       left%nxt=>right%nxt
       left%bef=>right%bef
-      left%parent=>right%parent !$BMWAG$N%3%T!<$@$1H/@8$9$k>l9g(B,$B?F$OJQ$($J$$(B
+      left%parent=>right%parent !要素のコピーだけ発生する場合,親は変えない
     end subroutine
     !--------------------------------
-    !>@brief node$B7?$N%G%9%H%i%/%?(B
+    !>@brief node型のデストラクタ
     !>
-    !>@param[in] self node$B7?(B
+    !>@param[in] self node型
     impure elemental subroutine node_final(self)
       type(node),intent(inout) :: self
       !print*,"dealloc node"
@@ -285,12 +285,12 @@ module flinkedlist
       self%parent=>null()
     end subroutine
     !--------------------------------
-    !>@brief nodeptr$B7?$,<($9%*%V%8%'%/%H$rI=<((B
+    !>@brief nodeptr型が示すオブジェクトを表示
     !>
-    !>@param[inout] mydata node_operator_type$B7?(B
-    !>@param[in] showproc obj_show_proc$B%$%s%?!<%U%'!<%9$G<($5$l$k0z?t$r;}$D4X?t(B
-    !>@param[in] passdata (optional)$BI=<($G;H$&%*%W%7%g%s%G!<%?(B
-    !>@param[in] fid $B%U%!%$%k(Bid
+    !>@param[inout] mydata node_operator_type型
+    !>@param[in] showproc obj_show_procインターフェースで示される引数を持つ関数
+    !>@param[in] passdata (optional)表示で使うオプションデータ
+    !>@param[in] fid ファイルid
     subroutine node_show(mydata,showproc,passdata,fid)
       class(node_operator_type),intent(inout) :: mydata
       procedure(obj_show_proc),optional :: showproc
@@ -301,9 +301,9 @@ module flinkedlist
       call obj_show(mydata%pos%obj,printobj=showproc,passdata=passdata,fid=fid)
     end subroutine
     !--------------------------------
-    !>@brief list_type$B7?$NA4MWAG$r:o=|$9$k(B
+    !>@brief list_type型の全要素を削除する
     !>
-    !>@param[inout] self list_type$B7?(B
+    !>@param[inout] self list_type型
     impure elemental subroutine list_delall(self)
       class(list_type),intent(inout) :: self
       type(node),pointer :: tmp,inode
@@ -326,9 +326,9 @@ module flinkedlist
       self%head=>null()
     end subroutine
     !--------------------------------
-    !>@brief list_type$B7?$N%G%9%H%i%/%?(B
+    !>@brief list_type型のデストラクタ
     !>
-    !>@param[inout] self list_type$B7?(B
+    !>@param[inout] self list_type型
     impure elemental subroutine list_final(self)
       type(list_type),intent(inout) :: self
       !type(node),pointer :: tmp,inode
@@ -340,11 +340,11 @@ module flinkedlist
      !endif
     end subroutine
     !--------------------------------
-    !>@brief list_type$B7?$X$NMWAGDI2C4X?t(B
+    !>@brief list_type型への要素追加関数
     !>
-    !>@param[inout] self list_type$B7?(B
-    !>@param[in] obj $B%j%9%H@hF,$KMWAG(B($B2?$G$bNI$$(B)$B$rDI2C$9$k(B
-    !>@param[inout] addloc (optinal)node_operator_type$B$N;X<(@h$N<!$KMWAG(Bobj$B$rDI2C$9$k(B
+    !>@param[inout] self list_type型
+    !>@param[in] obj リスト先頭に要素(何でも良い)を追加する
+    !>@param[inout] addloc (optinal)node_operator_typeの指示先の次に要素objを追加する
     subroutine list_append(self,obj,addloc)
       class(list_type),intent(inout),target :: self
       class(*),intent(in) :: obj
@@ -352,26 +352,26 @@ module flinkedlist
       type(node),pointer :: add,tmp
       allocate(node::add)
       allocate(add%obj,source=obj)
-      add%parent=>self !$BMWAG$N?F%j%9%H$r<($9(B
+      add%parent=>self !要素の親リストを示す
       if(present(addloc))then
-        !list$BCf$N(Baddloc$B$N<!$N0LCV$K(Bnode$B$rA^F~(B
+        !list中のaddlocの次の位置にnodeを挿入
         if(.not.associated(addloc%parent))then
-          write(error_unit,*)"$BMWAG$rDI2C$9$k%j%9%H$,;XDj$5$l$F$$$^$;$s(B"
-          write(error_unit,*)"$B%G!<%?$O%j%9%H$KDI2C$5$l$^$;$s$G$7$?!#(B"
+          write(error_unit,*)"要素を追加するリストが指定されていません"
+          write(error_unit,*)"データはリストに追加されませんでした。"
           return
         endif
         if(.not.associated(addloc%pos))then
-          write(error_unit,*)"$BDI2C$9$k>l=j$N%]%$%s%?$,6u$G$9(B"
-          write(error_unit,*)"$B%G!<%?$O%j%9%H$KDI2C$5$l$^$;$s$G$7$?!#(B"
+          write(error_unit,*)"追加する場所のポインタが空です"
+          write(error_unit,*)"データはリストに追加されませんでした。"
           return
         else
-          !$BDI2C(B
+          !追加
           add%nxt=>addloc%pos%nxt
-          addloc%pos%nxt=>add      !$B$3$3$G(Baddloc$B$N%]%$%s%?;X<(@h$,=q$-49$($i$l$k(B
+          addloc%pos%nxt=>add      !ここでaddlocのポインタ指示先が書き換えられる
           add%bef=>addloc%pos
         endif
       else
-        !head$B$KA^F~(B
+        !headに挿入
         if(.not.associated(self%head))then
           self%head=>add
         else
@@ -384,13 +384,13 @@ module flinkedlist
       self%num=self%num+1
     end subroutine
     !--------------------------------
-    !>@brief $B%j%9%H$NA4MWAG$K4X?t$rE,MQ$9$k(B
+    !>@brief リストの全要素に関数を適用する
     !>
-    !>@param[in] self list_type$B7?(B
-    !>@param[in] applyproc (list_apply_proc)$B%$%s%?!<%U%'!<%9$r;}$D%f!<%6!<Dj5A%k!<%A%s(B
-    !>@param[in] passdata (optinal)applyproc$B%k!<%A%s$GDI2C%G!<%?$rMxMQ$9$k>l9g$K;HMQ(B
-    !>@param[in] parallel (optional)$BJBNs<B9T$7$?$$$H$-$K(B.TRUE.$B$r;XDj(B
-    !>@note R$B$N(Bapply$B4X?t$HF1MM$NF0:n$r0U?^$7$F:n@.$7$?!#(B
+    !>@param[in] self list_type型
+    !>@param[in] applyproc (list_apply_proc)インターフェースを持つユーザー定義ルーチン
+    !>@param[in] passdata (optinal)applyprocルーチンで追加データを利用する場合に使用
+    !>@param[in] parallel (optional)並列実行したいときに.TRUE.を指定
+    !>@note Rのapply関数と同様の動作を意図して作成した。
     subroutine list_apply(self,applyproc,passdata,parallel)
       class(list_type),intent(inout) :: self
       procedure(list_apply_proc) :: applyproc
@@ -407,34 +407,34 @@ module flinkedlist
       endif
 
       if(do_para)then
-        !$BJBNs<B9T(B(OpenMP)
+        !並列実行(OpenMP)
           temp=self%listarray()
           !$omp parallel
           !$omp do
           do i=1,size(temp)
-            !$B4X?t$r%j%9%HMWAG$KE,MQ(B
+            !関数をリスト要素に適用
             call applyproc(temp(i)%pos%obj,passdata=passdata)
           enddo
           !$omp end do
           !print *, "Hello! N =", omp_get_num_threads(), " and I am ", omp_get_thread_num()
           !$omp end parallel
       else
-        !$BC`<!<B9T(B
+        !逐次実行
         call ipt%init(self)
         do i=1,self%num
-          !$B4X?t$r%j%9%HMWAG$KE,MQ(B
+          !関数をリスト要素に適用
           call applyproc(ipt%pos%obj,passdata=passdata)
           call ipt%next()
         enddo
       endif
     end subroutine
     !--------------------------------
-    !>@brief $B%j%9%HMWAG$rA4$FI=<($9$k(B
+    !>@brief リスト要素を全て表示する
     !>
-    !>@param[in] self list_type$B7?(B
-    !>@param[in] showproc (optinal)$B%f!<%6!<Dj5A7?$rI=<($9$k%k!<%A%s(B
-    !>@param[in] passdata (optional)$BI=<($K;H$&DI2C%G!<%?(B
-    !>@param[in] fid $B%U%!%$%k(Bid
+    !>@param[in] self list_type型
+    !>@param[in] showproc (optinal)ユーザー定義型を表示するルーチン
+    !>@param[in] passdata (optional)表示に使う追加データ
+    !>@param[in] fid ファイルid
     subroutine list_showall(self,showproc,passdata,fid)
       class(list_type),intent(in),target :: self
       procedure(obj_show_proc),optional :: showproc
@@ -456,24 +456,24 @@ module flinkedlist
       enddo
     end subroutine
     !--------------------------------
-    !>@brief $B%j%9%H$+$iMWAG$r:o=|$9$k(B
+    !>@brief リストから要素を削除する
     !>
-    !>$B0z?t$KM?$($?%]%$%s%?$,<($9@h$NMWAG$r%j%9%H$+$i:o=|$9$k!#(B
-    !>@param[in] self list_type$B7?(B
-    !>@param[inout] delnode $B%j%9%HMWAG$N%]%$%s%?(B
+    !>引数に与えたポインタが示す先の要素をリストから削除する。
+    !>@param[in] self list_type型
+    !>@param[inout] delnode リスト要素のポインタ
     subroutine node_delete(self,delnode)
       class(list_type),intent(in),target :: self
       class(node_operator_type),intent(inout) :: delnode
       type(node),pointer :: bef,nxt
       class(list_type),pointer :: plist
-      !$B%]%$%s%?;X<(@h$N3NG'(B
+      !ポインタ指示先の確認
       if(.not.associated(delnode%pos))return
       if(.not.associated(delnode%parent,target=self))then
-        !print*,"$BDI2C$9$k>l=j$O%j%9%H$NMWAG$G$O$"$j$^$;$s(B"
-        print*,"$B:o=|$G$-$^$;$s$G$7$?!#(B"
+        !print*,"追加する場所はリストの要素ではありません"
+        print*,"削除できませんでした。"
         return
       else
-        !$B:o=|(B
+        !削除
         plist=>delnode%parent
         plist%num=plist%num-1
         bef=>delnode%pos%bef
@@ -481,7 +481,7 @@ module flinkedlist
         if(associated(bef))then
           bef%nxt=>nxt
         else
-          !$B%j%9%H@hF,$r:o=|$9$k$N$G(Bhead$B$N;Y;}@h$r=$@5(B
+          !リスト先頭を削除するのでheadの支持先を修正
           plist%head=>nxt
         endif
         if(associated(nxt))then
@@ -492,29 +492,29 @@ module flinkedlist
       endif
     end subroutine
     !--------------------------------
-    !>@brief $B%j%9%HMWAG?t$rJV$94X?t(B
+    !>@brief リスト要素数を返す関数
     !>
-    !>@param[in] self list_type$B7?(B
+    !>@param[in] self list_type型
     pure elemental function list_count_node(self)result(n)
       class(list_type),intent(in) :: self
       integer :: n
       n=self%num
     end function
     !--------------------------------
-    !>@brief $B%j%9%H$N%3%T!<(B($B%a%b%j$r?7$7$/%"%m%1!<%H(B)
+    !>@brief リストのコピー(メモリを新しくアロケート)
     !>
-    !>@param[in] right $B%$%3!<%k$N1&(B
-    !>@param[in] left  $B%$%3!<%k$N:8(B
+    !>@param[in] right イコールの右
+    !>@param[in] left  イコールの左
     impure elemental subroutine list_copy(left,right)
       class(list_type),intent(in) :: right
       class(list_type),intent(out) :: left
       type(node_operator_type) :: elpr
       integer :: i,n
-      !$B%3%T!<85$NMWAG$r;X$9(Belpr$B$r=i4|2=(B
+      !コピー元の要素を指すelprを初期化
       call elpr%init(right)
-      !$B%j%9%H:G8eHx$r;X$9>uBV$K$9$k(B
+      !リスト最後尾を指す状態にする
       call elpr%tail()
-      !$B%j%9%H$r0l$D$:$DDI2C(B
+      !リストを一つずつ追加
       n=right%count()
       do i=1,n
         call left%append(elpr%pos%obj)
@@ -522,53 +522,43 @@ module flinkedlist
       enddo
     end subroutine
     !--------------------------------
-    !>@brief $B%P%V%k%=!<%H$N<B9T(B
-    !>
-    !>@param[inout] self $B%=!<%H$r<B9T$9$k(B
-    !>@param[in] func list_sort_func$B%$%s%?!<%U%'!<%9$r;}$D%5%V%k!<%A%s(B
-    !>@param[in] passdata (optional)$B%=!<%H$G;H$&DI2C%G!<%?(B
     subroutine list_sort(self,func,passdata)
+      !<@brief do bubble sort
       class(list_type),intent(inout),target :: self
-      procedure(list_sort_func) :: func
-      class(*),intent(in),optional :: passdata
+      procedure(list_sort_func) :: func !< subroutine which has list_sort_func interface
+      class(*),intent(in),optional :: passdata !< additional parameter
       class(node),pointer :: ipt
       class(node),pointer :: jpt
       class(*),pointer :: tmpptr
-      !class(*),allocatable :: tmp
-      !$BMWAG?t$,(B1$B0J2<$J$i(Bsort$B$7$J$/$FNI$$(B
+      ! if list node is less than 1, sort is not needed
       if(self%num<=1)return
       ipt=>null()
       jpt=>null()
       !func(one,two)result(is_swap)
-      !one,two$B$N#2$D$N=gHV$rF~$lBX$($k$H$-$K(Bis_swap$B$,(BTRUE$B$H$J$k(B
+      !one,twoの２つの順番を入れ替えるときにis_swapがTRUEとなる
       ipt=>self%head
       do
         if(.not.associated(ipt))exit
         jpt=>ipt%nxt
         do
           if(.not.associated(jpt))exit
-          !$BF~$lBX$($N%A%'%C%/(B
+          ! check swapping
           if(func(ipt%obj,jpt%obj,passdata))then
-            !$BF~$lBX$((Bswap
-            !allocate(tmp,source=ipt%obj)
-            !call move_alloc(from=jpt%obj,to=ipt%obj)
-            !call move_alloc(from=tmp,to=jpt%obj)
-            !$B%j%s%/$N=$@5$NJ}$,Aa$$(B
             tmpptr=>ipt%obj
             ipt%obj=>jpt%obj
             jpt%obj=>tmpptr
           endif
-          !$B%]%$%s%?$r$9$9$a$k(B
+          ! next pointer
           jpt=>jpt%nxt
         enddo
         ipt=>ipt%nxt
       enddo
     end subroutine
     !--------------------------------
-    !>@brief $B%j%9%HMWAG$rG[Ns$H$7$F07$&$?$a$N(Bnode_operator_type$B7?G[Ns$N@8@.%k!<%A%s(B
+    !>@brief リスト要素を配列として扱うためのnode_operator_type型配列の生成ルーチン
     !>
-    !>@param[in] self $B%j%9%H(B
-    !>@retval res node_operator_type$BG[Ns(B
+    !>@param[in] self リスト
+    !>@retval res node_operator_type配列
     function list_elem_pointer_array(self)result(res)
       class(list_type),intent(in),target :: self
       type(node_operator_type),dimension(:),allocatable :: res
@@ -584,26 +574,26 @@ module flinkedlist
       enddo
     end function
     !--------------------------------
-    !>@brief $BL58BB?Aj@-%*%V%8%'%/%H$rI=<($9$k%k!<%A%s(B
+    !>@brief 無限多相性オブジェクトを表示するルーチン
     !>
-    !>@param[in] obj $BMWAG(B
-    !>@param[in] printobj (optional)obj_show_proc$B%$%s%?!<%U%'!<%9$r;}$D(B
-    !>                  $B%f!<%6!<Dj5A7?$rI=<($9$k>l9g$N<jB3$-(B
-    !>@param[in] passdata (optional)printobj$B$G;H$&DI2C%G!<%?(B
-    !>@param[in] fid (optional)$B%U%!%$%k(Bid
+    !>@param[in] obj 要素
+    !>@param[in] printobj (optional)obj_show_procインターフェースを持つ
+    !>                  ユーザー定義型を表示する場合の手続き
+    !>@param[in] passdata (optional)printobjで使う追加データ
+    !>@param[in] fid (optional)ファイルid
     subroutine obj_show(obj,printobj,passdata,fid)
       class(*),intent(in)::obj
       procedure(obj_show_proc),optional::printobj
       class(*),intent(in),optional :: passdata
       integer ,intent(in),optional :: fid
       integer :: fileid
-      !$B%U%!%$%k(Bid$B$N@_Dj(B
+      !ファイルidの設定
       if(present(fid))then
         fileid=fid
       else
         fileid=output_unit
       endif
-      !$BI=<(%k!<%A%s(B
+      !表示ルーチン
       select type(x=>obj)
       type is(integer(kind=int8))
         write(fileid,'(1X,G0)')x

@@ -1,6 +1,3 @@
-!>@file flinkedlistf90
-!> Doubly linked list module using unlimited polymorphic class.
-!>
 !-------------------------------------------------------------------
 !>@file flinkedlist.f90
 !>@brief Doubly linked list module using unlimited polymorphic class
@@ -8,7 +5,7 @@
 !> About *finkedlist* module
 !> ==========================
 !> Doubly linked list using unlimited polymorphic object pointer.
-!> Doubly linked list which can hold any predefined data type or user defined type.@n
+!> Doubly linked list which can hold any predefined data type or user defined type.
 !>
 !> * Public type
 !>   name of type | commentary
@@ -53,28 +50,26 @@ module flinkedlist
   use iso_fortran_env
   implicit none
   private
-  !public list_type
-  !public node_operator_type      !リスト要素を指すポインタを含むオブジェクト
   !--subroutinies
-  public obj_show        !組み込み型の表示+オプションで無限多相型の表示
+  public obj_show        ! the routine showing `class(*)` data
   !-- function interfaces
-  public list_sort_func  !ソート関数のインターフェース
-  public list_apply_proc !apply 関数のインターフェース
-  public obj_show_proc   !無限多相性オブジェクト表示のインターフェース
+  public list_sort_func  ! function interface for sort inside a list
+  public list_apply_proc ! interface for apply function to each elements
+  public obj_show_proc   ! function interface for print `class(*)` data object
 
   !---------
   !>@brief Objects of list elements
   !>
-  !>モジュール内で使用されるリスト要素
-  !>@note オブジェクト指向なのでfortran2003,2008の機能必須。
+  !> this is internal data structure in the list
+  !>@note fortran2003 and 2008 features are needed
   type,private :: node
-    class(*)  ,pointer,private :: obj=>null() !<リスト要素の実体へのポインタ
-    type(node),pointer,private :: nxt=>null() !<次要素へのリンク
-    type(node),pointer,private :: bef=>null() !<前要素へのリンク
+    class(*)  ,pointer,private :: obj=>null() !< data pointer
+    type(node),pointer,private :: nxt=>null() !< link to the next node
+    type(node),pointer,private :: bef=>null() !< link to the before(previous) node
     contains
       final :: node_final
       procedure,private :: node_equal !< user defined assignment procedure
-      generic :: assignment(=) => node_equal !<ユーザー定義代入操作(generic,assignment)
+      generic :: assignment(=) => node_equal !< user defined assignemet (generic)
   end type
   !---------
   !>@brief リスト要素オブジェクト(外部からの操作機能付き)
@@ -86,20 +81,20 @@ module flinkedlist
     class(list_type),pointer,private :: parent=>null() !<親オブジェクトへのポインタ
     contains
       final :: node_operator_type_final !<node_operator_type型のデストラクタ
-      procedure,non_overridable,public :: init    => node_operator_type_init !<初期化
+      procedure,non_overridable,public :: init    => node_operator_type_init !< initialization
       procedure,non_overridable,public :: head    => node_operator_type_head !<指示先をリスト先頭に戻す
       procedure,non_overridable,public :: tail    => node_operator_type_tail !<指示先をリスト最後尾に
       procedure,non_overridable,public :: next    => node_operator_type_next !<指示先を一つ次に移す
       procedure,non_overridable,public :: prev    => node_operator_type_previous !<指示先を一つ前に移す
       procedure,non_overridable,public :: show => node_show !<
       procedure,non_overridable,public :: get_ptr  => node_operator_type_getobj_ptr   !<指示先の要素へのポインタを得る
-      procedure,non_overridable,public :: get_alloc  => node_operator_type_getobj_alloc   !<指示先の要素へのポインタを得る
+      procedure,non_overridable,public :: get_alloc  => node_operator_type_getobj_alloc   !<指示先の要素への実体を得る
   end type
   !---------
-  !>@brief リンクリストを保持するオブジェクト。
+  !>@brief doubly linked list object
   type,public :: list_type
-    type(node),pointer,private :: head=>null() !<リスト先頭へのポインタ
-    integer,private :: num=0         !<リスト要素数
+    type(node),pointer,private :: head=>null() !< list head
+    integer,private :: num=0         !< number of elements in the list
     contains
       final :: list_final !<list_type型のデストラクタ
       procedure,non_overridable,public :: append    => list_append  !<
@@ -287,16 +282,13 @@ module flinkedlist
       left%bef=> null()
     end subroutine
     !--------------------------------
-    !>@brief node型のデストラクタ
+    !>@brief  destructor for a node type
     !>
-    !>@param[in] self node型
     impure elemental subroutine node_final(self)
-      type(node),intent(inout) :: self
-      !print*,"dealloc node"
+      type(node),intent(inout) :: self !< self object
       if(associated(self%obj))deallocate(self%obj)
       self%nxt=>null()
       self%bef=>null()
-      !self%parent=>null()
     end subroutine
     !--------------------------------
     !>@brief nodeptr型が示すオブジェクトを表示

@@ -13,7 +13,8 @@ program check
   call copy_list(list)
   call node_operation(list)
   call transform_list2array(list)
-  !call convert_sametype_list2array()
+  call list%delall()
+  call convert_sametype_list2array()
   !---
   contains
     subroutine user_show_proc(obj,passdata,fid)
@@ -29,14 +30,14 @@ program check
     subroutine transform_list2array(list)
       class(list_type) :: list
       type(node_operator_type),allocatable :: nodearray(:)
-      class(*),allocatable :: val
+      class(*),pointer :: val_ptr
       integer :: i
       print*,"!===   list to node_operator_array (Head:1 ~ tail:10)"
       nodearray = list%listarray()
       do i=1,size(nodearray)
         write(output_unit,'(3x,i3)',advance='no') i
         call nodearray(i)%show(showproc=user_show_proc)
-        val = nodearray(i)%get_alloc()
+        val_ptr => nodearray(i)%get_ptr()
       end do
     end subroutine
 
@@ -120,33 +121,38 @@ program check
     end subroutine
 
     subroutine convert_sametype_list2array()
-      class(list_type),allocatable :: list
+      class(list_type),allocatable :: li
       type(node_operator_type),allocatable :: nodearray(:)
       type(user_type),allocatable :: ud(:)
       integer :: i,n
-      allocate(list_type::list)
+      allocate(list_type::li)
       n=8
-      print*,"!===   convert_sametype_list2array"
+      print*,"!===   convert_sametype_list2array (Head:1~Tail:n)"
       do i=1,n
-        call list%append(user_type(i,real(i,kind=real32)))
+        call li%append(user_type(i,real(i,kind=real32)))
       end do
-      nodearray = list%listarray()
+      nodearray = li%listarray()
+      print *,"! show values from node_operator_type",size(nodearray),li%count()
       do i=1,size(nodearray)
         write(output_unit,'(3x,i3)',advance='no') i
         call nodearray(i)%show(showproc=user_show_proc)
-        !val = nodearray(i)%get_alloc()
+      end do
+      ud=polimophicval2userdefinedtype(nodearray)
+      print *,"! show values from user_type array"
+      do i=1,size(ud)
+        print*, ud(i)
       end do
       print*,"!===   end convert_sametype_list2array"
     end subroutine
 
-   !function poli2userdefinedtype(self) result(ud)
-   !  type(node_operator_type),intent(in) :: self
-   !  type(user_type) :: ud
-   !  class(*),allocatable :: var
-   !  var = self%get_alloc()
-   !  select type(var)
-   !  type is(user_type)
-   !    ud = var
-   !  end select
-   !end function
+    impure elemental function polimophicval2userdefinedtype(self) result(ud)
+      type(node_operator_type),intent(in) :: self
+      type(user_type) :: ud
+      class(*),allocatable :: var
+      var = self%get_alloc()
+      select type(var)
+      type is(user_type)
+        ud = var
+      end select
+    end function
 end program check

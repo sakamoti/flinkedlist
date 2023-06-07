@@ -313,15 +313,13 @@ module flinkedlist
     impure elemental subroutine list_delall(self)
       class(list_type),intent(inout) :: self
       type(node),pointer :: tmp,inode
-      integer :: i
-      i=0
+      integer :: istat
       inode=>self%head
       do
         if(associated(inode))then
           !print*,"deallocate list contents of ",i
-          i=i+1
           tmp=>inode%nxt
-          deallocate(inode)
+          deallocate(inode,stat=istat)
           inode=>tmp
         else
           exit
@@ -337,13 +335,7 @@ module flinkedlist
     !>@param[inout] self list_type型
     impure elemental subroutine list_final(self)
       type(list_type),intent(inout) :: self
-      !type(node),pointer :: tmp,inode
-      !integer,save :: icnt=0
       call self%delall()
-     !icnt=icnt+1
-     !if(mod(icnt,100000)==1)then
-     !  print*,"list_final call",icnt
-     !endif
     end subroutine
     !--------------------------------
     subroutine list_append(self,obj,addloc)
@@ -563,20 +555,21 @@ module flinkedlist
     !>@brief リスト要素を配列として扱うためのnode_operator_type型配列の生成ルーチン
     !>
     !>@param[in] self リスト
-    !>@retval res node_operator_type配列
+    !>@retval res node_operator_type配列(オリジナルのリスト要素のコピー)
     function list_elem_pointer_array(self)result(res)
       class(list_type),intent(in),target :: self
       type(node_operator_type),dimension(:),allocatable :: res
-      type(node),pointer :: tmp
+      type(node),pointer :: i_ptr
       integer :: i
       allocate(res(self%num))
       if(self%num<=0)return
       call res(:)%init(self) !initialize elementary
-      tmp=>self%head
-      do i=1,self%num
-        res(i)%pos=>tmp
-        tmp=>tmp%nxt
-      enddo
+      i_ptr => self%head
+      do i=1,self%count()
+        allocate(res(i)%pos)
+        allocate(res(i)%pos%obj,source=i_ptr%obj)
+        i_ptr => i_ptr%nxt
+      end do
     end function
     !--------------------------------
     !>@brief 無限多相性オブジェクトを表示するルーチン

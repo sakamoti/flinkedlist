@@ -37,7 +37,7 @@ program check
       do i=1,size(nodearray)
         write(output_unit,'(3x,i3)',advance='no') i
         call nodearray(i)%show(showproc=user_show_proc)
-        val_ptr => nodearray(i)%get_ptr()
+        call nodearray(i)%get_ptr(val_ptr)
       end do
     end subroutine
 
@@ -114,8 +114,8 @@ program check
       end do
       write(*,'("  4th element=")',advance='no') 
       call list%show(node) ! show inside the list object
-      val = node%get_alloc() !newly allocated value
-      val_ptr => node%get_ptr() ! pointer points inside the list
+      call node%get_alloc(val) !newly allocated value
+      call node%get_ptr(val_ptr ) ! pointer points inside the list
       call obj_show(val)
       print *,"!--- end node_operation --"
     end subroutine
@@ -149,7 +149,7 @@ program check
       type(node_operator_type),intent(in) :: self
       type(user_type) :: ud
       class(*),allocatable :: var
-      var = self%get_alloc()
+      call self%get_alloc(var)
       select type(var)
       type is(user_type)
         ud = var

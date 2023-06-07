@@ -218,24 +218,28 @@ module flinkedlist
     !>@brief node_operator_typeが指し示す要素を直に指すポインタを返す
     !>
     !>@param[in] self 操作対象のnode_operator_type型
-    !>@retval res 無限多相性のオブジェクトを示すポインタ
-    function node_operator_type_getobj_ptr(self)result(res)
+    !>@retval ptr 無限多相性のオブジェクトを示すポインタ
+    !>@note
+    !> このルーチンは、リスト内部の要素そのものを指し示すポインタを返す
+    subroutine node_operator_type_getobj_ptr(self,ptr)
       class(node_operator_type),intent(in) :: self
-      class(*),pointer :: res
-      res=>null()
+      class(*),pointer,intent(inout) :: ptr
+      ptr=>null()
       if(.not.associated(self%pos))return
       if(.not.associated(self%pos%obj))return
-      !allocate(res,source=self%pos%obj)
-      res=>self%pos%obj
-    end function
+      ptr=>self%pos%obj
+    end subroutine
 
-    function node_operator_type_getobj_alloc(self)result(res)
-      class(node_operator_type),intent(in) :: self
-      class(*),allocatable :: res
+    !--------------------------------
+    !>@brief node_operator_typeが指し示す要素のコピーを返す
+    !>
+    subroutine node_operator_type_getobj_alloc(self,res)
+      class(node_operator_type),intent(in) :: self !<リスト内部の特定部位を指すオブジェクト
+      class(*),allocatable :: res !<無限多相性のオブジェクト(コピー)
       if(.not.associated(self%pos))return
       if(.not.associated(self%pos%obj))return
       allocate(res,source=self%pos%obj)
-    end function
+    end subroutine
     !--------------------------------
     !>@brief node_operator_typeが親リストを持つかどうかチェックする
     !>

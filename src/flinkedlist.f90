@@ -113,6 +113,8 @@ module flinkedlist
         !<sort elements by using user defined routine (subroutine)
       procedure,non_overridable,public :: listarray => list_elem_pointer_array !<
         !<リスト要素を指す配列を作る(function)
+      procedure,non_overridable,public :: listarray_ptr => list_elem_pointer_array_ptr !<
+        !<リスト要素を指す配列を作る(function)
       procedure,non_overridable,nopass,public :: show => node_show !<
         !<指定された要素1つを表示(subroutine)
       procedure,non_overridable,private :: copy      => list_copy !<
@@ -407,7 +409,7 @@ module flinkedlist
 
       if(do_para)then
         !with OpenMP
-        temp=self%listarray()
+        temp=self%listarray_ptr()
         !$omp parallel
         !$omp do
         do i=1,size(temp)
@@ -415,8 +417,8 @@ module flinkedlist
           call applyproc(temp(i)%pos%obj,passdata=passdata)
         enddo
         !$omp end do
-        !print *, "Hello! N =", omp_get_num_threads(), " and I am ", omp_get_thread_num()
         !$omp end parallel
+        !print *, "Hello! N =", omp_get_num_threads(), " and I am ", omp_get_thread_num()
       else
         !sequential
         call ipt%init(self)
@@ -555,6 +557,27 @@ module flinkedlist
         ipt=>ipt%nxt
       enddo
     end subroutine
+    !--------------------------------
+    !>@brief リスト要素を配列として扱うためのnode_operator_type型配列の生成ルーチン
+    !>
+    !>@param[in] self リスト
+    !>@retval res node_operator_type配列(オリジナルのリスト要素のポインタ)
+    function list_elem_pointer_array_ptr(self)result(res)
+      class(list_type),intent(in),target :: self
+      type(node_operator_type),dimension(:),allocatable :: res
+      type(node),pointer :: i_ptr
+      integer :: i
+      allocate(res(self%num))
+      if(self%num<=0)return
+      call res(:)%init(self) !initialize elementary
+      i_ptr => self%head
+      do i=1,self%count()
+        allocate(res(i)%pos)
+        !allocate(res(i)%pos%obj,source=i_ptr%obj)
+        res(i)%pos%obj => i_ptr%obj
+        i_ptr => i_ptr%nxt
+      end do
+    end function
     !--------------------------------
     !>@brief リスト要素を配列として扱うためのnode_operator_type型配列の生成ルーチン
     !>

@@ -15,6 +15,8 @@ program check
   call transform_list2array(list)
   call list%delall()
   call convert_sametype_list2array()
+  call example_sort()
+  call example_apply()
   !---
   contains
     subroutine user_show_proc(obj,passdata,fid)
@@ -155,4 +157,117 @@ program check
         ud = var
       end select
     end function
+
+    impure elemental function polimophicval2real(self) result(ud)
+      type(node_operator_type),intent(in) :: self
+      real(kind=real64) :: ud
+      class(*),allocatable :: var
+      call self%get_alloc(var)
+      select type(var)
+      type is(real(kind=real64))
+        ud = var
+      end select
+    end function
+
+    subroutine example_sort()
+      type(list_type) :: sortedlist,reversedlist,originlist
+      real(kind=real64) :: x(10)
+      type(node_operator_type) :: n1,n2,n3
+      class(*),pointer :: x1,x2,x3
+      integer :: i
+      call random_number(x)
+      do i=1,size(x)
+        call sortedlist%append(x(i))
+      end do
+      originlist=sortedlist !save original
+      reversedlist=sortedlist !save original
+      call sortedlist%sort(sortfun,.false.) !sort
+      call reversedlist%sort(sortfun,.true.) !sort(reverse)
+      call n1%init(originlist)
+      call n2%init(sortedlist)
+      call n3%init(reversedlist)
+      print *,"!=== sort procedure usage example"
+      print *, "  i x(original)    x(sorted)  x(reversed)"
+      do i=1,size(x)
+        call n1%get_ptr(x1)
+        call n2%get_ptr(x2)
+        call n3%get_ptr(x3)
+        select type(x1)
+        type is (real(kind=real64))
+          select type(x2)
+            type is (real(kind=real64))
+            select type(x3)
+              type is (real(kind=real64))
+              print'(i3,3f13.9)', i,x1,x2,x3
+            end select
+          end select
+        end select
+        call n1%next()
+        call n2%next()
+        call n3%next()
+      end do
+      print *,"!=== END: sort procedure usage example"
+    end subroutine
+    
+    logical function sortfun(one,two,passdata)
+      class(*),intent(in) :: one,two
+      class(*),intent(in),optional :: passdata
+      select type(one)
+      type is (real(kind=real64))
+        select type(two)
+        type is (real(kind=real64))
+          if(one < two)then
+            sortfun=.true.
+          else
+            sortfun=.false.
+          end if
+        end select
+      end select
+      !---
+      select type(passdata)
+      type is (logical)
+        if(passdata) then
+          sortfun= .not. sortfun
+        end if
+      end select
+    end function
+
+    subroutine example_apply()
+      type(list_type),allocatable :: nlist(:)
+      type(node_operator_type),allocatable :: nodeop(:,:)
+      real(kind=real64),allocatable :: x(:,:)
+      integer :: i,j
+      allocate(nlist(5))
+      do i=1,10
+        do j=1,size(nlist)
+          call nlist(j)%append(real(i,kind=real64))
+        end do
+      end do
+      allocate(nodeop(10,5))
+      allocate(x(10,5))
+      do i=1,size(nlist)
+        call nlist(i)%apply(applyproc,passdata=real(i,kind=real64),&
+          & parallel=.true.)
+        nodeop(:,i)=nlist(i)%listarray()
+      end do
+      x=polimophicval2real(nodeop)
+      print *, "!=== apply function example"
+      print *, "i-th    x1     x2     x3     x4     x5"
+      do i=1,size(x(:,1))
+        print'(i4,5f7.1)',i,x(i,:)
+      end do
+      print *, "!=== END: apply function example"
+    end subroutine
+
+    subroutine applyproc(obj,passdata)
+      class(*),intent(inout) :: obj
+      class(*),intent(in),optional :: passdata
+      select type(obj)
+      type is(real(kind=real64))
+        select type(passdata)
+        type is(real(kind=real64))
+          obj=obj*passdata
+        end select
+      end select
+    end subroutine
 end program check

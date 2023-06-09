@@ -33,3 +33,6 @@
 
 # vim undo files
 *.un~
+
+# folders
+doc-flinkedlist

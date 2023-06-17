@@ -77,21 +77,21 @@ program append_and_retrieve
     integer :: i
     
     !... append data into the list ...
-    call list%append(1_int32) !append element(int32) in the *samplelist*
-    call list%append(32.0_real32)    !append element(real64) in the *samplelist*
-    call list%append(64.0_real64)    !append element(real64) in the *samplelist*
-    call list%append(128.0_real128)    !append element(real128) in the *samplelist*
-    call list%append((3.0_real32,2.0_real32))    !append element(complex32) in the *samplelist*
-    call list%append((6.0_real64,4.0_real64))    !append element(complex64) in the *samplelist*
-    call list%append(.TRUE.) !append element(logical) in the *samplelist*
-    call list%append("a")    !append element(character) in the *samplelist*
-    call list%append("Hello Fortran Linked list!")    !append element(strings) in the *samplelist*
-    call list%append(ud) !append element(user defined type) in the *samplelist*
+    call list%append(1_int32) !append node(int32)
+    call list%append(32.0_real32)    !append node(real64)
+    call list%append(64.0_real64)    !append node(real64)
+    call list%append(128.0_real128)    !append node(real128)
+    call list%append((3.0_real32,2.0_real32))    !append node(complex32)
+    call list%append((6.0_real64,4.0_real64))    !append node(complex64)
+    call list%append(.TRUE.) !append node(logical)
+    call list%append("a")    !append node(character)
+    call list%append("Hello Fortran Linked list!")    !append node(strings)
+    call list%append(ud) !append node(user defined type)
     !... show list data
     print *, "!-- show all (intrinsinc data type only)"
-    call list%showall()  !show all elements in the *samplelist*
+    call list%showall()  !show all nodes
     print *, "!-- show all (add user defined type showing routine)"
-    call list%showall(showproc=user_show_proc) !show all elements in the *samplelist*
+    call list%showall(showproc=user_show_proc) !show all nodes
 
     !... retrieve data from the list
     call node%init(list)
@@ -99,7 +99,7 @@ program append_and_retrieve
     do i=1,4
       call node%next()
     end do
-    call node%get_alloc(val) !copy list element to new memory
+    call node%get_alloc(val) !copy list node to new memory
     call node%get_ptr(val_ptr) !pointer which points inside the list
 
     !... showing data from a list
@@ -119,8 +119,65 @@ end program
 ```
 
 ### Apply procedure to each data
+```fortran
+program applyprocedure
+  use iso_fortran_env
+  use flinkedlist
+  implicit none
+  integer,parameter :: n = 1000
+  type(list_type) :: list
+  type(node_operator_type) :: node
+  integer :: i
+
+  type my_data
+    real(real64) :: x(n,2)
+  end type
+  type(my_data) :: xarray
+
+
+  do i=1,5
+    call random_number(xarray%x)
+    call list%append(xarray)
+  end do
+
+  print *, "!--- original list ---"
+  call list%apply(array_double,parallel=.FALSE.)
+
+  contains
+    subroutine array_double(obj, passdata)
+      class(*), intent(inout) :: obj
+      class(*), intent(in), optional :: passdata
+      real(real64),allocatable,target :: dot
+      select type(obj)
+      type is (my_data)
+        obj%x = obj%x * 2d0
+      end select
+    end subroutine
+end program
+```
 
 ### Deep copy of list_type
+
+```fortran
+ program deepcopy
+  use flinkedlist
+  implicit none
+  type(list_type) :: list_origin, list_copied
+  type(node_operator_type) :: node
+  integer :: i
+  do i=1,5
+    call list_origin%append(i)
+  end do
+
+  print *, "!--- original list ---"
+  call list_origin%showall()
+
+  list_copied = list_origin ! deep copy
+
+  print *, "!--- copied list ---"
+  call list_copied%showall()
+end program
+```
 
 ### Node operation
 

@@ -200,5 +200,72 @@ end program
 ### Node operation
 
 ### Sort data
+```fortran
+program sort
+  use iso_fortran_env
+  use flinkedlist
+  implicit none
+  type(list_type) :: sortedlist,reversedlist,originlist
+  real(kind=real64) :: x(10)
+  type(node_operator_type) :: n1,n2,n3
+  class(*),pointer :: x1,x2,x3
+  integer :: i
+  call random_number(x)
+  do i=1,size(x)
+    call sortedlist%append(x(i))
+  end do
+  originlist=sortedlist !save original
+  reversedlist=sortedlist !save original
+  call sortedlist%sort(sortfun,.false.) !sort
+  call reversedlist%sort(sortfun,.true.) !sort(reverse)
+  call n1%init(originlist)
+  call n2%init(sortedlist)
+  call n3%init(reversedlist)
+  print *,"!=== sort procedure usage example"
+  print *, "  i x(original)    x(sorted)  x(reversed)"
+  do i=1,size(x)
+    call n1%get_ptr(x1)
+    call n2%get_ptr(x2)
+    call n3%get_ptr(x3)
+    select type(x1)
+    type is (real(kind=real64))
+      select type(x2)
+        type is (real(kind=real64))
+        select type(x3)
+          type is (real(kind=real64))
+          print'(i3,3f13.9)', i,x1,x2,x3
+        end select
+      end select
+    end select
+    call n1%next()
+    call n2%next()
+    call n3%next()
+  end do
+  print *,"!=== END: sort procedure usage example"
+  contains
+    logical function sortfun(one,two,passdata)
+      class(*),intent(in) :: one,two
+      class(*),intent(in),optional :: passdata
+      select type(one)
+      type is (real(kind=real64))
+        select type(two)
+        type is (real(kind=real64))
+          if(one < two)then
+            sortfun=.true.
+          else
+            sortfun=.false.
+          end if
+        end select
+      end select
+      !---
+      select type(passdata)
+      type is (logical)
+        if(passdata) then
+          sortfun= .not. sortfun
+        end if
+      end select
+    end function
+end program
+```
 
 ### Transform (list -> array)

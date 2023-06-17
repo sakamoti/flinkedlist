@@ -85,7 +85,7 @@ module flinkedlist
     end function
     subroutine list_apply_proc(obj,passdata)
       !! apply関数で与える関数の型
-      class(*),intent(inout) :: obj !! 操作対象のオブジェクト(リスト要素)
+      class(*),intent(inout),pointer :: obj !! 操作対象のオブジェクト(リスト要素)
       class(*),intent(in),optional :: passdata !!追加データが必要な時に使う
     end subroutine
     subroutine obj_show_proc(obj,passdata,fid)

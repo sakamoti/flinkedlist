@@ -120,37 +120,55 @@ end program
 ```
 
 ### Apply procedure to each data
+When you compile this module with `OpenMP`, `list%apply` function 
+can apply function with OpenMP parallel.
+
 ```fortran
 program applyprocedure
   use iso_fortran_env
   use flinkedlist
   implicit none
-  integer,parameter :: n = 1000
+  integer,parameter :: n = 10000
   type(list_type) :: list
-  type(node_operator_type) :: node
   integer :: i
 
   type my_data
-    real(real64) :: x(n,2)
+    real(real64),allocatable :: x(:,:)
   end type
   type(my_data) :: xarray
 
-
-  do i=1,5
+  allocate(xarray%x(n,2))
+  do i=1,100
     call random_number(xarray%x)
     call list%append(xarray)
   end do
-
-  call list%apply(array_double,parallel=.FALSE.)
+  call list%apply(array_dot,parallel=.true.)
+  !call list%showall(user_show_proc)
+  call list%delall()
 
   contains
-    subroutine array_double(obj, passdata)
-      class(*), intent(inout) :: obj
+    subroutine array_dot(obj, passdata)
+      class(*), intent(inout),pointer :: obj
       class(*), intent(in), optional :: passdata
       real(real64),allocatable,target :: dot
+      integer :: i
       select type(obj)
       type is (my_data)
-        obj%x = obj%x * 2d0
+        do i = 1,10000
+          dot = DOT_PRODUCT(obj%x(:,1), obj%x(:,2))
+        end do
+        deallocate(obj%x)
+        allocate(obj%x(1,1))
+        obj%x = dot
+      end select
+    end subroutine
+    subroutine user_show_proc(obj, passdata, fid)
+      class(*), intent(in) :: obj
+      class(*), intent(in),optional :: passdata
+      integer, intent(in), optional :: fid
+      select type(obj)
+      type is (my_data)
+        print *, "user_type:", obj%x
       end select
     end subroutine
 end program

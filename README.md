@@ -197,8 +197,6 @@ end program
 end program
 ```
 
-### Node operation
-
 ### Sort data
 ```fortran
 program sort

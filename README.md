@@ -269,3 +269,57 @@ end program
 ```
 
 ### Transform (list -> array)
+
+This sample shows array like acces to each list elements.
+
+```fortran
+program list2array
+  use flinkedlist
+  use iso_fortran_env
+  implicit none
+  type user_type
+    integer      :: n = 0
+    real(real32) :: x = 0d0
+  end type
+  type(user_type),allocatable :: ud(:)
+  type(node_operator_type),allocatable :: nodearray(:)
+  type(list_type) :: li
+  integer :: i,n
+
+  n=8
+  do i=1,n
+    call li%append(user_type(i,real(i,kind=real32)))
+  end do
+  nodearray = li%listarray()
+  print *,"! show values from node_operator_type",size(nodearray),li%count()
+  do i=1,size(nodearray)
+    write(output_unit,'(3x,i3)',advance='no') i
+    call nodearray(i)%show(showproc=user_show_proc)
+  end do
+  print *,"! show values from user_type array"
+  ud=polimophicval2userdefinedtype(nodearray)
+  do i=1,size(ud)
+    print*, ud(i)
+  end do
+  contains
+    impure elemental function polimophicval2userdefinedtype(self) result(ud)
+      type(node_operator_type),intent(in) :: self
+      type(user_type) :: ud
+      class(*),allocatable :: var
+      call self%get_alloc(var)
+      select type(var)
+      type is(user_type)
+        ud = var
+      end select
+    end function
+    subroutine user_show_proc(obj,passdata,fid)
+      class(*),intent(in) :: obj
+      class(*),intent(in),optional :: passdata
+      integer,intent(in),optional :: fid
+      select type(obj)
+      type is(user_type)
+        print *,"user_type:", obj
+      end select
+    end subroutine
+end program
+```

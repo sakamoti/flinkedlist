@@ -56,8 +56,9 @@ About `node_operator_type`.
 - The `node_operator_type` type is responsible for moving through the list, retrieving and displaying data.
 - When acquiring data, there is a method `get_alloc` to allocate memory separate from the list elements, and a method ` get_ptr` to get a pointer that points directly inside the list.
 
-### Append and retrieve data
+## Examples
 
+### Append and retrieve data
 ```fortran
 program append_and_retrieve
     use flinkedlist

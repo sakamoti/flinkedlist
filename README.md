@@ -141,7 +141,6 @@ program applyprocedure
     call list%append(xarray)
   end do
 
-  print *, "!--- original list ---"
   call list%apply(array_double,parallel=.FALSE.)
 
   contains

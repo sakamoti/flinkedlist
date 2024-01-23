@@ -15,13 +15,16 @@ module m_linkedlist_sametype
         integer(int64),private :: n_elements = 0
         class(node_t),pointer,private :: head => null()
         class(node_t),pointer,private :: tail => null()
+        class(node_t),pointer,public :: current_node => null() !for iteration
         contains
         procedure,non_overridable,public :: entries => get_the_numver_of_entries
         procedure,non_overridable,public :: append => list_t_append
         procedure,non_overridable,public :: insert => list_t_insert
         procedure,non_overridable,public :: remove => list_t_remove_idx
         procedure,non_overridable,public :: clear => list_t_clear
+        procedure,non_overridable,public :: init_next_nodeclass => list_t_init_next_node
         procedure,non_overridable,public :: get_nodeclass => list_t_get_node
+        procedure,non_overridable,public :: get_next_nodeclass => list_t_get_next_node
     end type
 
     contains
@@ -143,5 +146,19 @@ module m_linkedlist_sametype
         do i=2,loc
             node_ptr => node_ptr%nxt
         end do
+    end subroutine
+
+    subroutine list_t_init_next_node(self)
+        class(list_t),intent(inout) :: self
+        self%current_node => self%head
+    end subroutine
+
+    subroutine list_t_get_next_node(self)
+        class(list_t),intent(inout) :: self
+        if(associated(self%current_node%nxt))then
+          self%current_node => self%current_node%nxt
+        else
+          self%current_node => null()
+        end if
     end subroutine
 end module

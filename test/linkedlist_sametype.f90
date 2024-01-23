@@ -40,6 +40,7 @@ program main
     type(mylist) :: list
     type(node_int_t) :: node_int
     type(node_int_t),pointer :: node_int_ptr => null()
+    double precision :: ts, te
 
     print *,"!=== LINKEDLIST TEST =================="
     do i=1,10
@@ -55,12 +56,33 @@ program main
     call list%insert(1,node_int) ! insert node to head
     !
     print *,"Entries number in the list:",list%entries()
+    call cpu_time(ts)
     do i=1,list%entries()
       call list%get_ptr(i,node_int_ptr)
       print*,i,":",&
           node_int_ptr%i8,node_int_ptr%i16,&
           node_int_ptr%i32,node_int_ptr%i64
     end do
+    call cpu_time(te)
+    print*, "cputime=",te-ts,"sec"
+
+    print *, "!-----------------------------------"
+    call cpu_time(ts)
+    call list%init_next_nodeclass()
+    i = 1
+    do 
+      select type(x => list%current_node)
+      type is (node_int_t)
+        print*,i,":",&
+          x%i8,node_int_ptr%i16,&
+          x%i32,node_int_ptr%i64
+      end select
+      call list%get_next_nodeclass()
+      i = i + 1
+      if(.not.associated(list%current_node))exit
+    end do
+    call cpu_time(te)
+    print*, "cputime=",te-ts,"sec"
     !
     call list%clear()
     print*,"After clearing list, Entries number in the list is:",list%entries()

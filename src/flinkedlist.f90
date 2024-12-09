@@ -316,26 +316,26 @@ module flinkedlist
         if(parallel) do_para=.true.
       endif
 
-      if(do_para)then
-        !with OpenMP
-        temp=self%listarray_ptr()
-        !$omp parallel
-        !$omp do
-        do i=1,size(temp)
-          !apply function to list elements
-          call applyproc(temp(i)%pos%obj,passdata=passdata)
-        enddo
-        !$omp end do
-        !$omp end parallel
-        !print *, "Hello! N =", omp_get_num_threads(), " and I am ", omp_get_thread_num()
-      else
+     !if(do_para)then
+     !  !with OpenMP
+     !  temp=self%listarray_ptr()
+     !  !$omp parallel
+     !  !$omp do
+     !  do i=1,size(temp)
+     !    !apply function to list elements
+     !    call applyproc(temp(i)%pos%obj,passdata=passdata)
+     !  enddo
+     !  !$omp end do
+     !  !$omp end parallel
+     !  !print *, "Hello! N =", omp_get_num_threads(), " and I am ", omp_get_thread_num()
+     !else
         !sequential
         call ipt%init(self)
         do i=1,self%num
           call applyproc(ipt%pos%obj,passdata=passdata)
           call ipt%next()
         enddo
-      endif
+     !endif
     end subroutine
     !--------------------------------
     subroutine list_showall(self,showproc,passdata,fid)

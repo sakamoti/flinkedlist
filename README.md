@@ -12,14 +12,16 @@
 
 ## Build
 This repository is built using [fpm](https://fpm.fortran-lang.org/en/index.html).
-You can also use this library by compiling `f90' code with your main program source code, since it is no dependency other than fortran code.
+You can also use this library by compiling `f90` code with your main program source code, since it is no dependency other than fortran code.
 
 If you use fpm, do the following.
 ```bash
-pip install fpm
+# clone repository
 git clone https://github.com/sakamoti/flinkedlist.git
 cd flinkedlist
 
+# install fpm from python package index
+pip install fpm
 # build and run test program
 fpm test
 ```
@@ -31,7 +33,7 @@ flinkedlist = {git = "https://github.com/sakamoti/flinkedlist.git"}
 ```
 
 ## DOCUMENT (API)
-
+(Not yet fully prepared)
 If you don't have documentation tool, you should first install
 [`ford`](https://forddocs.readthedocs.io/en/latest/index.html).
 ```bash

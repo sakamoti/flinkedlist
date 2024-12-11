@@ -1,4 +1,4 @@
-module flinkedlist
+module m_unlimited_polymorphic_linkedlist
   !$ use omp_lib
   use iso_fortran_env
   implicit none
@@ -7,7 +7,7 @@ module flinkedlist
   public obj_show        ! the routine showing `class(*)` data
   !-- function interfaces
   public list_sort_func  ! function interface for sort inside a list
-  public list_apply_proc ! interface for apply function to each elements
+  !public list_apply_proc ! interface for apply function to each elements
   public obj_show_proc   ! function interface for print `class(*)` data object
 
   type,private :: node
@@ -59,7 +59,7 @@ module flinkedlist
         !!count how many elements are there (subroutine,pure elemental)
       procedure,non_overridable,public :: showall   => list_showall
         !!show all elements (subroutine)
-      procedure,non_overridable,public :: apply     => list_apply
+      !procedure,non_overridable,public :: apply     => list_apply
         !!apply user defined routine in each elements (subroutine)
       procedure,non_overridable,public :: sort      => list_sort
         !!sort elements by using user defined routine (subroutine)
@@ -83,11 +83,11 @@ module flinkedlist
       class(*),intent(in),optional :: passdata !!比較の為に使う追加データ
       logical :: is_swap !!oneとtwoを入れ替えるときTRUE
     end function
-    subroutine list_apply_proc(obj,passdata)
-      !! apply関数で与える関数の型
-      class(*),intent(inout),pointer :: obj !! 操作対象のオブジェクト(リスト要素)
-      class(*),intent(in),optional :: passdata !!追加データが必要な時に使う
-    end subroutine
+   !subroutine list_apply_proc(obj,passdata)
+   !  !! apply関数で与える関数の型
+   !  class(*),intent(inout),pointer :: obj !! 操作対象のオブジェクト(リスト要素)
+   !  class(*),intent(in),optional :: passdata !!追加データが必要な時に使う
+   !end subroutine
     subroutine obj_show_proc(obj,passdata,fid)
       !! obj_showルーチンでユーザー定義型を表示する関数
       class(*),intent(in) :: obj !! 操作対象のオブジェクト(リスト要素)
@@ -298,45 +298,45 @@ module flinkedlist
       self%num=self%num+1
     end subroutine
     !--------------------------------
-    subroutine list_apply(self,applyproc,passdata,parallel)
-      !! リストの全要素に関数`applyproc`を適用する
-      !! @note 
-      !! Rのapply関数と同様の動作を意図して作成した。
-      class(list_type),intent(inout) :: self !! list_type型
-      procedure(list_apply_proc) :: applyproc !!`list_apply_proc`インターフェースを持つユーザー定義ルーチン
-      class(*),intent(in),optional :: passdata !! applyprocルーチンで追加データを利用する場合に使用
-      logical,intent(in),optional :: parallel !! OpenMPで並列実行したいときに.TRUE.を指定
-      type(node_operator_type) :: ipt
-      integer :: i
-      logical :: do_para
-      type(node_operator_type),dimension(:),allocatable :: temp
+   !subroutine list_apply(self,applyproc,passdata,parallel)
+   !  !! リストの全要素に関数`applyproc`を適用する
+   !  !! @note 
+   !  !! Rのapply関数と同様の動作を意図して作成した。
+   !  class(list_type),intent(inout) :: self !! list_type型
+   !  procedure(list_apply_proc) :: applyproc !!`list_apply_proc`インターフェースを持つユーザー定義ルーチン
+   !  class(*),intent(in),optional :: passdata !! applyprocルーチンで追加データを利用する場合に使用
+   !  logical,intent(in),optional :: parallel !! OpenMPで並列実行したいときに.TRUE.を指定
+   !  type(node_operator_type) :: ipt
+   !  integer :: i
+   !  logical :: do_para
+   !  type(node_operator_type),dimension(:),allocatable :: temp
 
-      do_para=.false.
-      if(present(parallel))then
-        if(parallel) do_para=.true.
-      endif
+   !  do_para=.false.
+   !  if(present(parallel))then
+   !    if(parallel) do_para=.true.
+   !  endif
 
-     !if(do_para)then
-     !  !with OpenMP
-     !  temp=self%listarray_ptr()
-     !  !$omp parallel
-     !  !$omp do
-     !  do i=1,size(temp)
-     !    !apply function to list elements
-     !    call applyproc(temp(i)%pos%obj,passdata=passdata)
-     !  enddo
-     !  !$omp end do
-     !  !$omp end parallel
-     !  !print *, "Hello! N =", omp_get_num_threads(), " and I am ", omp_get_thread_num()
-     !else
-        !sequential
-        call ipt%init(self)
-        do i=1,self%num
-          call applyproc(ipt%pos%obj,passdata=passdata)
-          call ipt%next()
-        enddo
-     !endif
-    end subroutine
+   !  if(do_para)then
+   !    !with OpenMP
+   !    temp=self%listarray_ptr()
+   !    !$omp parallel
+   !    !$omp do
+   !    do i=1,size(temp)
+   !      !apply function to list elements
+   !      call applyproc(temp(i)%pos%obj,passdata=passdata)
+   !    enddo
+   !    !$omp end do
+   !    !$omp end parallel
+   !    !print *, "Hello! N =", omp_get_num_threads(), " and I am ", omp_get_thread_num()
+   !  else
+   !    !sequential
+   !    call ipt%init(self)
+   !    do i=1,self%num
+   !      call applyproc(ipt%pos%obj,passdata=passdata)
+   !      call ipt%next()
+   !    enddo
+   !  endif
+   !end subroutine
     !--------------------------------
     subroutine list_showall(self,showproc,passdata,fid)
       !! リスト要素を全て表示する
@@ -537,4 +537,4 @@ module flinkedlist
         endif
       end select
     end subroutine
-end module flinkedlist
+end module

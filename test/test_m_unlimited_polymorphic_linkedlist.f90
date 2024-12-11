@@ -1,5 +1,5 @@
 program check
-  use flinkedlist
+  use m_unlimited_polymorphic_linkedlist
   use iso_fortran_env
   implicit none
   type user_type
@@ -16,7 +16,7 @@ program check
   call list%delall()
   call convert_sametype_list2array()
   call example_sort()
-  call example_apply()
+  !call example_apply()
   !---
   contains
     subroutine user_show_proc(obj,passdata,fid)
@@ -232,32 +232,32 @@ program check
       end select
     end function
 
-    subroutine example_apply()
-      type(list_type),allocatable :: nlist(:)
-      type(node_operator_type),allocatable :: nodeop(:,:)
-      real(kind=real64),allocatable :: x(:,:)
-      integer :: i,j
-      allocate(nlist(5))
-      do i=1,10
-        do j=1,size(nlist)
-          call nlist(j)%append(real(i,kind=real64))
-        end do
-      end do
-      allocate(nodeop(10,5))
-      allocate(x(10,5))
-      do i=1,size(nlist)
-        call nlist(i)%apply(applyproc,passdata=real(i,kind=real64),&
-          & parallel=.true.)
-        nodeop(:,i)=nlist(i)%listarray()
-      end do
-      x=polimophicval2real(nodeop)
-      print *, "!=== apply function example"
-      print *, "i-th    x1     x2     x3     x4     x5"
-      do i=1,size(x(:,1))
-        print'(i4,5f7.1)',i,x(i,:)
-      end do
-      print *, "!=== END: apply function example"
-    end subroutine
+   !subroutine example_apply()
+   !  type(list_type),allocatable :: nlist(:)
+   !  type(node_operator_type),allocatable :: nodeop(:,:)
+   !  real(kind=real64),allocatable :: x(:,:)
+   !  integer :: i,j
+   !  allocate(nlist(5))
+   !  do i=1,10
+   !    do j=1,size(nlist)
+   !      call nlist(j)%append(real(i,kind=real64))
+   !    end do
+   !  end do
+   !  allocate(nodeop(10,5))
+   !  allocate(x(10,5))
+   !  do i=1,size(nlist)
+   !    call nlist(i)%apply(applyproc,passdata=real(i,kind=real64),&
+   !      & parallel=.true.)
+   !    nodeop(:,i)=nlist(i)%listarray()
+   !  end do
+   !  x=polimophicval2real(nodeop)
+   !  print *, "!=== apply function example"
+   !  print *, "i-th    x1     x2     x3     x4     x5"
+   !  do i=1,size(x(:,1))
+   !    print'(i4,5f7.1)',i,x(i,:)
+   !  end do
+   !  print *, "!=== END: apply function example"
+   !end subroutine
 
     subroutine applyproc(obj,passdata)
       class(*),intent(inout) :: obj

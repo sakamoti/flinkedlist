@@ -14,18 +14,25 @@ module m_linkedlist
         integer(int64),private :: n_elements = 0
         class(node_t),pointer,private :: head => null()
         class(node_t),pointer,private :: tail => null()
-        class(node_t),pointer,public :: current_node => null() !for iteration
+        class(node_t),pointer,private :: current_node => null() ! for iteration
         integer,private :: warning_output_unit = error_unit
     contains
+        ! private procedures
+        procedure,non_overridable,private :: list_t_get_current_node_ptr, list_t_get_current_node_allocatable
+        procedure,non_overridable,private :: list_t_get_node_ptr, list_t_get_node_allocatable
+        ! public procedures
         procedure,non_overridable,public :: entries => get_the_numver_of_entries
         procedure,non_overridable,public :: append => list_t_append
         procedure,non_overridable,public :: insert => list_t_insert
         procedure,non_overridable,public :: remove => list_t_remove_idx
         procedure,non_overridable,public :: clear => list_t_clear
-        procedure,non_overridable,public :: init_next_nodeclass => list_t_init_next_node
-        procedure,non_overridable,public :: get_next_nodeclass => list_t_get_next_node
-        procedure,non_overridable,private :: list_t_get_node_ptr, list_t_get_node_allocatable
+        procedure,non_overridable,public :: set_current_node_to_head => list_t_set_current_node_to_head
+        procedure,non_overridable,public :: set_current_node_to_tail => list_t_set_current_node_to_tail
+        procedure,non_overridable,public :: next => list_t_next_node
+        procedure,non_overridable,public :: before => list_t_before_node
+        procedure,non_overridable,public :: is_current_node_null => list_t_is_current_node_null
         generic,public :: get_nodeclass => list_t_get_node_ptr, list_t_get_node_allocatable
+        generic,public :: get_current_nodeclass => list_t_get_current_node_ptr,list_t_get_current_node_allocatable 
     end type
 
     contains
@@ -95,6 +102,9 @@ module m_linkedlist
             self%n_elements = self%n_elements - 1
             node_ptr => node_ptr_nxt
         end do
+        self%head => null()
+        self%tail => null()
+        self%current_node => null()
     end subroutine
 
     subroutine list_t_remove_idx(self, loc)
@@ -105,10 +115,10 @@ module m_linkedlist
         if(loc<=0 .or. self%n_elements < loc)then
             write(self%warning_output_unit,'("DELETE WARNING :: index[",i0,"] is out of range[",i0,"]")') loc,self%n_elements
             return
-        else if(loc==1.and.self%n_elements/=1)then
+        else if(loc==1.and.self%n_elements>1)then
             node_ptr => self%head
             self%head => node_ptr%nxt
-            self%tail => null()
+            self%head%bef => null()
             deallocate(node_ptr)
             self%n_elements = self%n_elements - 1
             return
@@ -163,17 +173,77 @@ module m_linkedlist
         allocate(node_allocatable, source = node_ptr)
     end subroutine
 
-    subroutine list_t_init_next_node(self)
+    subroutine list_t_set_current_node_to_head(self)
         class(list_t),intent(inout) :: self
         self%current_node => self%head
     end subroutine
 
-    subroutine list_t_get_next_node(self)
+    subroutine list_t_set_current_node_to_tail(self)
         class(list_t),intent(inout) :: self
+        self%current_node => self%tail
+    end subroutine
+
+    subroutine list_t_next_node(self, status)
+        class(list_t),intent(inout) :: self
+        integer,intent(out),optional :: status
+        integer :: i_status
+        if(.not.associated(self%current_node))then
+          return
+        end if
         if(associated(self%current_node%nxt))then
           self%current_node => self%current_node%nxt
+          i_status = 0
         else
           self%current_node => null()
+          i_status = 1
+        end if
+        if(present(status))then
+            status = i_status
         end if
     end subroutine
+
+    subroutine list_t_before_node(self, status)
+        class(list_t),intent(inout) :: self
+        integer,intent(out),optional :: status
+        integer :: i_status
+        if(.not.associated(self%current_node))then
+          return
+        end if
+        if(associated(self%current_node%bef))then
+          self%current_node => self%current_node%bef
+          i_status = 0
+        else
+          self%current_node => null()
+          i_status = 1
+        end if
+        if(present(status))then
+            status = i_status
+        end if
+    end subroutine
+
+    subroutine list_t_get_current_node_ptr(self, node_ptr)
+        class(list_t),intent(inout) :: self
+        class(node_t),pointer,intent(inout) :: node_ptr
+        node_ptr => self%current_node
+    end subroutine
+
+    subroutine list_t_get_current_node_allocatable(self, node_allocatable)
+        class(list_t),intent(inout) :: self
+        class(node_t),allocatable,intent(inout) :: node_allocatable
+        class(node_t),pointer :: node_ptr
+        node_ptr => self%current_node
+        if(allocated(node_allocatable)) deallocate(node_allocatable)
+        if(associated(node_ptr))then
+            allocate(node_allocatable, source = node_ptr)
+        end if
+    end subroutine
+
+    logical function list_t_is_current_node_null(self)
+        class(list_t), intent(in) :: self
+        if(associated(self%current_node))then
+            list_t_is_current_node_null = .false.
+        else
+            list_t_is_current_node_null = .true.
+        end if
+    end function
 end module

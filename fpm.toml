@@ -1,5 +1,5 @@
 name = "flinkedlist"
-version = "0.1.0"
+version = "1.0.0"
 license = "MIT"
 author = "Yuichiro Sakamoto"
 maintainer = "62064838+sakamoti@users.noreply.github.com"

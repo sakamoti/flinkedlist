@@ -116,7 +116,7 @@ module mynode
         integer,intent(out) :: iostat
         character(*),intent(inout) :: iomsg
         write(unit, fmt='(a,i10)',iostat=iostat, iomsg=iomsg) &
-          "r32node_t       : idx  =",self%idx
+          "i32node_t       : idx  =",self%idx
       end subroutine
 
       ! factories

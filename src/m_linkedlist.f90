@@ -18,21 +18,27 @@ module m_linkedlist
         integer,private :: warning_output_unit = error_unit
     contains
         ! private procedures
-        procedure,non_overridable,private :: list_t_get_current_node_ptr, list_t_get_current_node_allocatable
-        procedure,non_overridable,private :: list_t_get_node_ptr, list_t_get_node_allocatable
+        procedure,private :: get_current_node_ptr => list_t_get_current_node_ptr
+        procedure,private :: get_current_node_allocatable => list_t_get_current_node_allocatable
+        procedure,private :: get_node_ptr => list_t_get_node_ptr
+        procedure,private :: get_node_allocatable => list_t_get_node_allocatable
         ! public procedures
         procedure,non_overridable,public :: entries => get_the_numver_of_entries
+        procedure,non_overridable,public :: pop_tail => list_t_pop_tail
+        procedure,non_overridable,public :: pop_head => list_t_pop_head
         procedure,non_overridable,public :: append => list_t_append
+        procedure,non_overridable,public :: extend => list_t_extend
         procedure,non_overridable,public :: insert => list_t_insert
         procedure,non_overridable,public :: remove => list_t_remove_idx
         procedure,non_overridable,public :: clear => list_t_clear
+        procedure,non_overridable,public :: nullify => list_t_nullify
         procedure,non_overridable,public :: set_current_node_to_head => list_t_set_current_node_to_head
         procedure,non_overridable,public :: set_current_node_to_tail => list_t_set_current_node_to_tail
         procedure,non_overridable,public :: next => list_t_next_node
         procedure,non_overridable,public :: before => list_t_before_node
         procedure,non_overridable,public :: is_current_node_null => list_t_is_current_node_null
-        generic,public :: get_nodeclass => list_t_get_node_ptr, list_t_get_node_allocatable
-        generic,public :: get_current_nodeclass => list_t_get_current_node_ptr,list_t_get_current_node_allocatable 
+        generic,public :: get_nodeclass => get_node_ptr, get_node_allocatable
+        generic,public :: get_current_nodeclass => get_current_node_ptr, get_current_node_allocatable 
     end type
 
     contains
@@ -41,6 +47,44 @@ module m_linkedlist
         class(list_t),intent(in) :: self
         get_the_numver_of_entries = self%n_elements
     end function
+
+    subroutine list_t_pop_tail(self, node_ptr)
+        class(list_t), intent(inout) :: self
+        class(node_t), pointer :: node_ptr
+        if(self%entries()>1)then
+            call self%set_current_node_to_tail()
+            call self%get_current_nodeclass(node_ptr)
+            self%tail%bef%nxt => null()
+            self%tail => node_ptr%bef
+            self%n_elements = self%n_elements -1
+        else if(self%entries()==1)then
+            call self%set_current_node_to_tail()
+            call self%get_current_nodeclass(node_ptr)
+            self%n_elements = self%n_elements - 1
+        end if
+        if(self%entries()==0)then
+            call self%nullify()
+        end if
+    end subroutine
+
+    subroutine list_t_pop_head(self, node_ptr)
+        class(list_t), intent(inout) :: self
+        class(node_t), pointer :: node_ptr
+        if(self%entries()>1)then
+            call self%set_current_node_to_head()
+            call self%get_current_nodeclass(node_ptr)
+            self%head%nxt%bef => null()
+            self%head => node_ptr%nxt
+            self%n_elements = self%n_elements -1
+        else if(self%entries()==1)then
+            call self%set_current_node_to_head()
+            call self%get_current_nodeclass(node_ptr)
+            self%n_elements = self%n_elements -1
+        end if
+        if(self%entries()==0)then
+            call self%nullify()
+        end if
+    end subroutine
 
     subroutine list_t_append(self, node)
         class(list_t),intent(inout) :: self
@@ -58,6 +102,31 @@ module m_linkedlist
             self%tail => node_copy
         endif
         self%n_elements = self%n_elements + 1
+    end subroutine
+
+    subroutine list_t_extend(self, extend_list)
+        class(list_t),intent(inout) :: self
+        class(list_t),intent(inout) :: extend_list
+        if(extend_list%entries()==0)then
+            return
+        endif
+        if(self%entries()==0)then
+            self%head => extend_list%head
+            self%tail => extend_list%tail
+        else
+            self%tail%nxt => extend_list%head
+            self%tail => extend_list%tail
+        end if
+        call extend_list%nullify()
+    end subroutine
+
+    subroutine list_t_nullify(self)
+        class(list_t),intent(inout) :: self
+        ! nullify extend_list
+        self%head => null()
+        self%tail => null()
+        self%current_node => null()
+        self%n_elements = 0
     end subroutine
 
     subroutine list_t_insert(self, loc, node)

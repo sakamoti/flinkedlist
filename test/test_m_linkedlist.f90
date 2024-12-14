@@ -4,7 +4,7 @@ program main
     use iso_fortran_env
     implicit none
     integer :: i
-    type(list_t) :: list
+    type(list_t) :: list, extend_list
     double precision :: ts, te
     class(node_t), allocatable, target ::  node_copied
     class(node_t), pointer ::  node_ptr
@@ -41,6 +41,22 @@ program main
     call show_with_ptr_tail_to_head(list) 
     call cpu_time(te)
     write(output_unit,fmt=cputime_format_str) te-ts
+
+    call list%pop_tail(node_ptr)
+    call list%pop_head(node_ptr)
+    write(output_unit,*) "!-----------------------------------"
+    write(output_unit,*) "After popright and popleft:",list%entries()
+    call show_with_ptr_head_to_tail(list)
+
+    write(output_unit,*) "!-----------------------------------"
+    call extend_list%append(i32node_factory(i))
+    call extend_list%append(r64node_factory(real(i, kind=real64)))
+    call extend_list%append(circle_node_factory(real(i, kind=real64)))
+    call extend_list%append(rectangle_node_factory(real(i, kind=real64),real(i*3, kind=real64)))
+    write(output_unit,*) "Before extend list:",list%entries(),extend_list%entries()
+    call list%extend(extend_list)
+    write(output_unit,*) "After extend list:",list%entries(),extend_list%entries()
+    call show_with_ptr_head_to_tail(list)
 
     call list%clear()
     write(output_unit,*) "!-----------------------------------"

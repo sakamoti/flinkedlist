@@ -22,6 +22,7 @@ module m_linkedlist
         procedure,private :: get_current_node_allocatable => list_t_get_current_node_allocatable
         procedure,private :: get_node_ptr => list_t_get_node_ptr
         procedure,private :: get_node_allocatable => list_t_get_node_allocatable
+        procedure,non_overridable,private :: nullify => list_t_nullify
         ! public procedures
         procedure,non_overridable,public :: entries => get_the_numver_of_entries
         procedure,non_overridable,public :: pop_tail => list_t_pop_tail
@@ -31,7 +32,6 @@ module m_linkedlist
         procedure,non_overridable,public :: insert => list_t_insert
         procedure,non_overridable,public :: remove => list_t_remove_idx
         procedure,non_overridable,public :: clear => list_t_clear
-        procedure,non_overridable,public :: nullify => list_t_nullify
         procedure,non_overridable,public :: set_current_node_to_head => list_t_set_current_node_to_head
         procedure,non_overridable,public :: set_current_node_to_tail => list_t_set_current_node_to_tail
         procedure,non_overridable,public :: next => list_t_next_node
